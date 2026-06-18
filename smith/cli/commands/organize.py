@@ -2,7 +2,9 @@ from pathlib import Path
 
 import typer
 
+from smith.cli.console import print_footer, print_markdown
 from smith.cli.render import render_tool_result
+from smith.core.formatting import format_result_footer
 from smith.services.tool_runner import run_organize
 
 
@@ -11,7 +13,13 @@ def organize(
     path: Path = typer.Argument(..., help="Directory to organize"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Preview changes without moving files"),
 ) -> None:
-    """Organize files in a directory into category folders."""
+    """Organize files in a directory into category folders.
+
+    Examples:
+
+        smith organize ~/Downloads --dry-run
+        smith organize ~/Downloads
+    """
     verbose_dry_run = ctx.obj.get("dry_run", False) if ctx.obj else False
     effective_dry_run = dry_run or verbose_dry_run
 
@@ -20,11 +28,8 @@ def organize(
         typer.echo(preview.message, err=True)
         raise typer.Exit(code=1)
 
-    typer.echo(preview.message)
-    if preview.success:
-        from smith.core.formatting import format_completion_line
-
-        typer.echo(format_completion_line("organize", max(preview.execution_time_ms, 0)))
+    print_markdown(preview.message)
+    print_footer(format_result_footer("organize", max(preview.execution_time_ms, 0)))
 
     if effective_dry_run:
         return

@@ -35,6 +35,7 @@ def memory_service(tmp_path) -> MemoryService:
 @pytest.fixture(autouse=True)
 def isolate_env(monkeypatch):
     monkeypatch.setenv("SMITH_SKIP_DOTENV", "1")
+    monkeypatch.setenv("SMITH_NO_COLOR", "1")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
     monkeypatch.delenv("SMITH_LLM_PROVIDER", raising=False)

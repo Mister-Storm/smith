@@ -12,7 +12,7 @@ def test_chat_slash_duplicates(tmp_path, fake_llm, memory_service, config_with_o
     result = service._handle_slash_command(f"/duplicates {tmp_path}")
 
     assert "Group 1" in result
-    assert "completed in" in result
+    assert "Execution time:" in result
 
 
 def test_chat_slash_unknown(fake_llm, memory_service, config_with_openai):
@@ -34,7 +34,7 @@ def test_chat_slash_context(tmp_path, fake_llm, memory_service, config_with_open
     service = ChatService(fake_llm, memory_service, config)
     result = service._handle_slash_command(f"/context {tmp_path}")
     assert "# Project Context" in result
-    assert "completed in" in result
+    assert "Execution time:" in result
 
 
 def test_chat_slash_analyze_structure_only(tmp_path, fake_llm, memory_service, config_with_openai):
@@ -52,7 +52,8 @@ def test_chat_normal_message(fake_llm, memory_service, config_with_openai):
     service = ChatService(fake_llm, memory_service, config_with_openai)
     result = service._handle_chat(session_id, "hello")
 
-    assert result == "fake response"
+    assert "fake response" in result
+    assert "Provider:" in result
     assert len(fake_llm.calls) == 1
 
 

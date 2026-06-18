@@ -253,3 +253,64 @@ def format_doctor_report(report: DoctorReport) -> str:
     lines.append(report.overall_message)
 
     return "\n".join(lines)
+
+
+_STATUS_STYLE = {
+    CheckStatus.OK: ("✓", "green"),
+    CheckStatus.WARN: ("⚠", "yellow"),
+    CheckStatus.CRITICAL: ("✗", "red"),
+}
+
+
+def render_doctor_report(report: DoctorReport, console) -> None:
+    from rich.panel import Panel
+    from rich.table import Table
+
+    console.print("[bold]Smith Doctor Report[/bold]\n")
+
+    for title, check in report.sections:
+        table = Table(title=title, show_header=True, header_style="bold")
+        table.add_column("Check", style="dim")
+        table.add_column("Status", width=8)
+        table.add_column("Details")
+
+        icon, style = _STATUS_STYLE[check.status]
+        for line in check.lines:
+            if ": " in line:
+                key, value = line.split(": ", 1)
+                table.add_row(key, f"[{style}]{icon}[/{style}]", value)
+            else:
+                table.add_row(line, f"[{style}]{icon}[/{style}]", "")
+
+        console.print(table)
+        console.print()
+
+    if report.connectivity:
+        table = Table(title="Provider Connectivity", show_header=True, header_style="bold")
+        table.add_column("Check", style="dim")
+        table.add_column("Status", width=8)
+        table.add_column("Details")
+        icon, style = _STATUS_STYLE[report.connectivity.status]
+        for line in report.connectivity.lines:
+            if ": " in line:
+                key, value = line.split(": ", 1)
+                table.add_row(key, f"[{style}]{icon}[/{style}]", value)
+            else:
+                table.add_row(line, f"[{style}]{icon}[/{style}]", "")
+        console.print(table)
+        console.print()
+
+    if report.exit_code == 0:
+        summary_style = "green"
+    elif report.exit_code == 1:
+        summary_style = "yellow"
+    else:
+        summary_style = "red"
+    console.print(
+        Panel(
+            report.overall_message,
+            title="Overall Status",
+            border_style=summary_style,
+            expand=False,
+        )
+    )

@@ -11,6 +11,12 @@ def duplicates(
     path: Path = typer.Argument(..., help="Directory to scan for duplicates"),
     min_size: int = typer.Option(0, "--min-size", help="Minimum file size in bytes"),
 ) -> None:
-    """Find duplicate files in a directory."""
+    """Find duplicate files in a directory.
+
+    Examples:
+
+        smith duplicates ~/Downloads
+        smith duplicates ~/Downloads --min-size 1024
+    """
     result = run_duplicates(path, min_size=min_size)
     render_tool_result(result, tool_name="duplicates")

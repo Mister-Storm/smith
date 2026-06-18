@@ -39,7 +39,10 @@ Smith is built for software development, file organization, document analysis, a
 
 | Feature | Description |
 |---------|-------------|
-| **Chat** | REPL with conversation history stored in SQLite |
+| **Setup** | Interactive wizard for provider, env keys, and memory DB |
+| **Help** | Rich usage guide with examples (`smith help`) |
+| **Version** | Show version, provider, and model (`smith version`) |
+| **Chat** | REPL with Rich startup banner and slash commands |
 | **Context** | Generate structured project context (languages, frameworks, architecture) |
 | **Analyze** | Analyze projects using ProjectContext; markdown report, health score, JSON output |
 | **Duplicates** | Find duplicate files by SHA-256 hash and report wasted disk space |
@@ -54,10 +57,20 @@ Smith is built for software development, file organization, document analysis, a
 - Python 3.12+
 - An API key for [OpenAI](https://platform.openai.com/) and/or [DeepSeek](https://platform.deepseek.com/)
 
-### Install
+### Install (recommended)
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/smith.git
+pipx install smith-ai
+smith setup
+smith doctor
+```
+
+API keys are stored in environment variables (via `~/.smith/env.sh` or your shell profile), **never** in `config.toml`.
+
+### Install from source (development)
+
+```bash
+git clone https://github.com/Mister-Storm/smith.git
 cd smith
 
 python3 -m venv .venv
@@ -68,17 +81,17 @@ pip install -e ".[dev]"
 
 ### Configure
 
-Copy the example environment file and add your API key:
+Run the interactive setup wizard (no manual file editing required):
+
+```bash
+smith setup
+```
+
+Or set environment variables manually:
 
 ```bash
 cp .env.example .env
-```
-
-Edit `.env` and set at least one of:
-
-```env
-OPENAI_API_KEY=sk-...
-DEEPSEEK_API_KEY=sk-...
+# Edit .env and set OPENAI_API_KEY or DEEPSEEK_API_KEY
 ```
 
 Verify your setup:
@@ -86,15 +99,19 @@ Verify your setup:
 ```bash
 smith doctor
 smith doctor --test-provider   # optional: test LLM connectivity
+smith version                  # show version, provider, model
 ```
 
 ## Usage
 
 ### Workstation tools (Sprint 2)
 
-Every tool is available via **CLI commands** and **chat slash commands**. Successful runs display execution timing (e.g. `Analysis completed in 1.2 seconds.`).
+Every tool is available via **CLI commands** and **chat slash commands**. Successful runs show a standardized footer with execution time and a suggested next command.
 
 ```bash
+smith help
+smith version
+smith setup
 smith context .
 smith analyze .
 smith analyze . --structure-only          # offline scan, no LLM
@@ -121,6 +138,11 @@ smith organize ~/Downloads
 ### All commands
 
 ```bash
+# Setup and info
+smith setup
+smith help
+smith version
+
 # Interactive chat with slash commands
 smith chat
 
@@ -157,9 +179,9 @@ Global flags: `--verbose` / `-v`, `--dry-run` (for destructive commands).
 
 Smith loads settings in this order:
 
-1. Optional `~/.smith/config.toml`
+1. Optional `~/.smith/config.toml` (provider, models, db path — **no API keys**)
 2. `.env` file (project root or `~/.smith/.env`)
-3. Environment variables
+3. Environment variables (API keys must be set here)
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -174,14 +196,23 @@ Smith loads settings in this order:
 
 **Provider selection:** OpenAI is used when `OPENAI_API_KEY` is set; otherwise DeepSeek. Override with `SMITH_LLM_PROVIDER`.
 
-Optional `~/.smith/config.toml`:
+Optional `~/.smith/config.toml` (non-secret settings only):
 
 ```toml
+smith_llm_provider = "openai"
 openai_model = "gpt-4o-mini"
 deepseek_model = "deepseek-chat"
 db_path = "~/.smith/memory.db"
-smith_llm_provider = "openai"
 ```
+
+API keys via environment or `source ~/.smith/env.sh` (created by `smith setup`).
+
+## Releasing to PyPI
+
+1. Configure [PyPI trusted publishing](https://docs.pypi.org/trusted-publishers/) for the repository
+2. Create a GitHub Release with tag `v0.x.x`
+3. The publish workflow builds and uploads `smith-ai` to PyPI
+4. Verify: `pipx install smith-ai`
 
 ## Chat Slash Commands
 
