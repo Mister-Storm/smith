@@ -20,6 +20,7 @@ def test_duplicates_command(tmp_path):
     result = runner.invoke(app, ["duplicates", str(tmp_path)])
     assert result.exit_code == 0
     assert "Group 1" in result.output
+    assert "completed in" in result.output
 
 
 def test_organize_dry_run(tmp_path):
@@ -43,6 +44,15 @@ def test_analyze_command(tmp_path, monkeypatch):
 
     assert result.exit_code == 0
     assert "Project Analysis" in result.output
+    assert "Analysis completed in" in result.output
+
+
+def test_analyze_structure_only(tmp_path):
+    (tmp_path / "Main.kt").write_text("fun main(){}")
+
+    result = runner.invoke(app, ["analyze", str(tmp_path), "--structure-only"])
+    assert result.exit_code == 0
+    assert "Project Structure" in result.output
 
 
 def test_analyze_output_file(tmp_path, monkeypatch):
@@ -79,14 +89,10 @@ def test_summarize_command(tmp_path, monkeypatch):
             instance.pages = [page]
             mock_reader.return_value = instance
 
-            with patch("smith.cli.commands.summarize.SummarizePdfTool") as mock_tool_cls:
-                mock_tool = MagicMock()
-                mock_tool.execute.return_value = MagicMock(success=True, output="# Summary\nDone")
-                mock_tool_cls.return_value = mock_tool
-
-                result = runner.invoke(app, ["summarize", str(pdf)])
+            result = runner.invoke(app, ["summarize", str(pdf)])
 
     assert result.exit_code == 0
+    assert "Summarization completed in" in result.output
 
 
 def test_doctor_command(monkeypatch, tmp_path):
@@ -109,7 +115,7 @@ def test_doctor_no_keys(monkeypatch, tmp_path):
     assert result.exit_code == 2
 
 
-def test_organize_with_confirm(tmp_path, monkeypatch):
+def test_organize_with_confirm(tmp_path):
     (tmp_path / "file.md").write_text("# doc")
 
     result = runner.invoke(app, ["organize", str(tmp_path)], input="y\n")

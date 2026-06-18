@@ -2,7 +2,8 @@ from pathlib import Path
 
 import typer
 
-from smith.tools.organize import OrganizeDownloadsTool
+from smith.cli.render import render_tool_result
+from smith.services.tool_runner import run_organize
 
 
 def organize(
@@ -14,14 +15,16 @@ def organize(
     verbose_dry_run = ctx.obj.get("dry_run", False) if ctx.obj else False
     effective_dry_run = dry_run or verbose_dry_run
 
-    tool = OrganizeDownloadsTool()
-    preview = tool.execute(path=str(path), dry_run=True)
-
+    preview = run_organize(path, dry_run=True)
     if not preview.success:
-        typer.echo(preview.output, err=True)
+        typer.echo(preview.message, err=True)
         raise typer.Exit(code=1)
 
-    typer.echo(preview.output)
+    typer.echo(preview.message)
+    if preview.success:
+        from smith.core.formatting import format_completion_line
+
+        typer.echo(format_completion_line("organize", max(preview.execution_time_ms, 0)))
 
     if effective_dry_run:
         return
@@ -30,8 +33,5 @@ def organize(
         typer.echo("Organize cancelled.")
         return
 
-    result = tool.execute(path=str(path), dry_run=False)
-    typer.echo(result.output)
-
-    if not result.success:
-        raise typer.Exit(code=1)
+    result = run_organize(path, dry_run=False)
+    render_tool_result(result, tool_name="organize")

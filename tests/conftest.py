@@ -32,12 +32,20 @@ def memory_service(tmp_path) -> MemoryService:
     service.close()
 
 
+@pytest.fixture(autouse=True)
+def isolate_env(monkeypatch):
+    monkeypatch.setenv("SMITH_SKIP_DOTENV", "1")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.delenv("SMITH_LLM_PROVIDER", raising=False)
+
+
 @pytest.fixture
 def config_with_openai(monkeypatch) -> Config:
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-openai")
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
     monkeypatch.delenv("SMITH_LLM_PROVIDER", raising=False)
-    return Config.load()
+    return Config.load(load_env=False)
 
 
 @pytest.fixture
@@ -45,4 +53,4 @@ def config_with_deepseek(monkeypatch) -> Config:
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test-deepseek")
     monkeypatch.delenv("SMITH_LLM_PROVIDER", raising=False)
-    return Config.load()
+    return Config.load(load_env=False)

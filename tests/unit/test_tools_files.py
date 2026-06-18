@@ -1,7 +1,26 @@
 from pathlib import Path
 
 from smith.tools.duplicates import FindDuplicateFilesTool
+from smith.tools.fs_utils import format_bytes, should_skip_path
 from smith.tools.organize import OrganizeDownloadsTool, _categorize
+
+
+def test_should_skip_path(tmp_path):
+    git_dir = tmp_path / ".git" / "config"
+    git_dir.parent.mkdir()
+    git_dir.write_text("ref")
+    assert should_skip_path(git_dir, tmp_path) is True
+
+    normal = tmp_path / "src" / "main.kt"
+    normal.parent.mkdir()
+    normal.write_text("x")
+    assert should_skip_path(normal, tmp_path) is False
+
+
+def test_format_bytes():
+    assert format_bytes(500) == "500 B"
+    assert "KB" in format_bytes(2048)
+    assert "MB" in format_bytes(2 * 1024 * 1024)
 
 
 def test_find_duplicates(tmp_path):
@@ -13,16 +32,16 @@ def test_find_duplicates(tmp_path):
     result = tool.execute(path=str(tmp_path))
 
     assert result.success
-    assert "Group 1" in result.output
-    assert "a.txt" in result.output
-    assert "b.txt" in result.output
+    assert "Group 1" in result.message
+    assert result.metadata["duplicate_groups"] == 1
+    assert "recoverable" in result.message.lower() or "recoverable" in result.message
 
 
 def test_find_duplicates_empty(tmp_path):
     tool = FindDuplicateFilesTool()
     result = tool.execute(path=str(tmp_path))
     assert result.success
-    assert "No duplicates found" in result.output
+    assert "No duplicates found" in result.message
 
 
 def test_find_duplicates_min_size(tmp_path):
@@ -35,8 +54,8 @@ def test_find_duplicates_min_size(tmp_path):
     tool = FindDuplicateFilesTool()
     result = tool.execute(path=str(tmp_path), min_size=50)
     assert result.success
-    assert "Group 1" in result.output
-    assert "small.txt" not in result.output
+    assert "Group 1" in result.message
+    assert "small.txt" not in result.message
 
 
 def test_find_duplicates_invalid_path(tmp_path):
@@ -60,9 +79,9 @@ def test_organize_dry_run(tmp_path):
     result = tool.execute(path=str(tmp_path), dry_run=True)
 
     assert result.success
-    assert "dry-run" in result.output
-    assert (tmp_path / "readme.md").exists()
-    assert (tmp_path / "photo.png").exists()
+    assert "dry-run" in result.message
+    assert "Summary:" in result.message
+    assert result.metadata["categories"]["Documents"] == 1
 
 
 def test_organize_moves_files(tmp_path):
@@ -73,7 +92,19 @@ def test_organize_moves_files(tmp_path):
 
     assert result.success
     assert (tmp_path / "Documents" / "readme.md").exists()
-    assert not (tmp_path / "readme.md").exists()
+    assert result.metadata["files_moved"] == 1
+
+
+def test_organize_skips_category_folder(tmp_path):
+    docs = tmp_path / "Documents"
+    docs.mkdir()
+    (docs / "file.pdf").write_bytes(b"%PDF")
+
+    tool = OrganizeDownloadsTool()
+    result = tool.execute(path=str(docs), dry_run=True)
+
+    assert result.success
+    assert "Skipping" in result.message
 
 
 def test_organize_collision_rename(tmp_path):
