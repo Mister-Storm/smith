@@ -9,6 +9,7 @@ def format_duration_ms(ms: int) -> str:
 
 _TOOL_LABELS = {
     "analyze": "Analysis",
+    "context": "Context",
     "summarize": "Summarization",
     "duplicates": "Duplicate scan",
     "organize": "Organization",

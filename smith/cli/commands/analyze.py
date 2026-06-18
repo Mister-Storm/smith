@@ -16,11 +16,12 @@ def analyze(
     structure_only: bool = typer.Option(
         False, "--structure-only", help="Structure report only, no LLM call"
     ),
+    as_json: bool = typer.Option(False, "--json", help="Output analysis as JSON"),
 ) -> None:
     """Analyze a project and generate a markdown architecture report."""
     config = Config.load()
     llm = None
-    if not structure_only:
+    if not structure_only and not as_json:
         try:
             llm = get_llm_provider(config)
         except ConfigurationError as exc:
@@ -32,5 +33,12 @@ def analyze(
         llm,
         output=output,
         structure_only=structure_only,
+        as_json=as_json,
     )
+    if as_json:
+        if not result.success:
+            typer.echo(result.message, err=True)
+            raise typer.Exit(code=1)
+        typer.echo(result.message)
+        return
     render_tool_result(result, tool_name="analyze")

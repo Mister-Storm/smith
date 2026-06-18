@@ -1,30 +1,7 @@
 from unittest.mock import MagicMock, patch
 
-from smith.tools.analyze_project import AnalyzeProjectTool, _scan_project
+from smith.tools.analyze_project import AnalyzeProjectTool
 from smith.tools.summarize_pdf import SummarizePdfTool
-
-
-def test_scan_kotlin_project(tmp_path):
-    (tmp_path / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
-    src = tmp_path / "src"
-    src.mkdir()
-    (src / "Main.kt").write_text("fun main() {}")
-
-    metadata = _scan_project(tmp_path)
-    assert "Kotlin" in metadata["languages"]
-    assert metadata["build_system"] == "Gradle (Kotlin DSL)"
-
-
-def test_scan_spring_boot_project(tmp_path):
-    pom = "<project><dependency>spring-boot-starter</dependency></project>"
-    (tmp_path / "pom.xml").write_text(pom)
-    (tmp_path / "application.yml").write_text("spring:\n  application:\n    name: demo")
-    (tmp_path / "App.java").write_text("@SpringBootApplication\npublic class App {}")
-
-    metadata = _scan_project(tmp_path)
-    assert "Java" in metadata["languages"]
-    assert metadata["framework"] == "spring-boot"
-    assert metadata["build_system"] == "Maven"
 
 
 def test_analyze_project_tool(tmp_path, fake_llm):
@@ -47,14 +24,35 @@ def test_analyze_structure_only(tmp_path):
     result = tool.execute(path=str(tmp_path), structure_only=True)
 
     assert result.success
-    assert "Project Structure" in result.message
+    assert "# Project Context" in result.message
+    assert "## Project Health" in result.message
     assert result.metadata["structure_only"] is True
+
+
+def test_analyze_json(tmp_path):
+    (tmp_path / "build.gradle.kts").write_text("plugins { kotlin(\"jvm\") }")
+    (tmp_path / "Main.kt").write_text("fun main() {}")
+
+    tool = AnalyzeProjectTool(None)
+    result = tool.execute(path=str(tmp_path), as_json=True)
+
+    assert result.success
+    assert "health_score" in result.message
+    assert result.metadata["health_score"] >= 0
 
 
 def test_analyze_invalid_path(tmp_path, fake_llm):
     tool = AnalyzeProjectTool(fake_llm)
     result = tool.execute(path=str(tmp_path / "nope"))
     assert not result.success
+
+
+def test_analyze_no_llm(tmp_path):
+    (tmp_path / "Main.kt").write_text("fun main() {}")
+    tool = AnalyzeProjectTool(None)
+    result = tool.execute(path=str(tmp_path))
+    assert not result.success
+    assert "LLM provider required" in result.message
 
 
 def test_summarize_pdf(tmp_path, fake_llm):

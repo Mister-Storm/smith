@@ -7,7 +7,13 @@ from smith.core.config import Config
 from smith.core.formatting import format_completion_line
 from smith.llm.base import LLMProvider
 from smith.memory.service import MemoryService
-from smith.services.tool_runner import run_analyze, run_duplicates, run_organize, run_summarize
+from smith.services.tool_runner import (
+    run_analyze,
+    run_context,
+    run_duplicates,
+    run_organize,
+    run_summarize,
+)
 from smith.tools.base import ToolResult
 
 logger = logging.getLogger(__name__)
@@ -18,6 +24,7 @@ Be concise and practical."""
 
 SLASH_COMMANDS_HELP = """
 Slash commands:
+  /context <path>                        Generate project context snapshot
   /duplicates <path> [--min-size N]     Find duplicate files
   /organize <path> [--dry-run]           Organize files (asks for confirmation)
   /analyze <path> [--structure-only]     Analyze a project
@@ -123,6 +130,8 @@ class ChatService:
         command = tokens[0].lower()
         args = tokens[1:]
 
+        if command == "/context":
+            return _format_tool_response(self._cmd_context(args), "context")
         if command == "/duplicates":
             return _format_tool_response(self._cmd_duplicates(args), "duplicates")
         if command == "/organize":
@@ -133,6 +142,11 @@ class ChatService:
             return _format_tool_response(self._cmd_summarize(args), "summarize")
 
         return f"Unknown command: {command}. Type /exit to quit."
+
+    def _cmd_context(self, args: list[str]) -> ToolResult:
+        if not args:
+            return ToolResult(success=False, message="Usage: /context <path>")
+        return run_context(args[0], config=self._config, save=True)
 
     def _cmd_duplicates(self, args: list[str]) -> ToolResult:
         min_size = 0

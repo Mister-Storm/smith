@@ -4,11 +4,14 @@ import time
 from pathlib import Path
 from typing import Any
 
+from smith.core.config import Config
 from smith.llm.base import LLMProvider
+from smith.memory.project_contexts import ProjectContextStore
 from smith.tools.analyze_project import AnalyzeProjectTool
 from smith.tools.base import Tool, ToolResult
 from smith.tools.duplicates import FindDuplicateFilesTool
 from smith.tools.organize import OrganizeDownloadsTool
+from smith.tools.project_context import ProjectContextTool
 from smith.tools.summarize_pdf import SummarizePdfTool
 
 logger = logging.getLogger(__name__)
@@ -39,13 +42,38 @@ def run_analyze(
     *,
     output: Path | None = None,
     structure_only: bool = False,
+    as_json: bool = False,
 ) -> ToolResult:
-    tool = AnalyzeProjectTool(llm if not structure_only else None)
-    result = _run_tool(tool, path=str(path), structure_only=structure_only)
+    tool = AnalyzeProjectTool(None if structure_only or as_json else llm)
+    result = _run_tool(
+        tool,
+        path=str(path),
+        structure_only=structure_only,
+        as_json=as_json,
+    )
     if result.success and output:
         output = Path(output)
         output.write_text(result.message, encoding="utf-8")
         return dataclasses.replace(result, output_path=output)
+    return result
+
+
+def run_context(
+    path: str | Path,
+    *,
+    config: Config | None = None,
+    save: bool = True,
+) -> ToolResult:
+    store = None
+    if save and config:
+        store = ProjectContextStore(config.db_path)
+    tool = ProjectContextTool()
+    kwargs: dict[str, Any] = {"path": str(path), "save": save}
+    if store:
+        kwargs["store"] = store
+    result = _run_tool(tool, **kwargs)
+    if store:
+        store.close()
     return result
 
 

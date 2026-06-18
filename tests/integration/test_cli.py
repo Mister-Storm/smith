@@ -52,7 +52,7 @@ def test_analyze_structure_only(tmp_path):
 
     result = runner.invoke(app, ["analyze", str(tmp_path), "--structure-only"])
     assert result.exit_code == 0
-    assert "Project Structure" in result.output
+    assert "# Project Context" in result.output
 
 
 def test_analyze_output_file(tmp_path, monkeypatch):
@@ -71,6 +71,26 @@ def test_analyze_output_file(tmp_path, monkeypatch):
     content = out_file.read_text()
     assert "# Project Analysis" in content
     assert "Java" in content
+
+
+def test_context_command(tmp_path, monkeypatch):
+    monkeypatch.setenv("SMITH_DB_PATH", str(tmp_path / "ctx.db"))
+    (tmp_path / "build.gradle.kts").write_text("plugins { kotlin(\"jvm\") }")
+    (tmp_path / "Main.kt").write_text("fun main() {}")
+
+    result = runner.invoke(app, ["context", str(tmp_path)])
+    assert result.exit_code == 0
+    assert "# Project Context" in result.output
+    assert "Context completed in" in result.output
+
+
+def test_analyze_json(tmp_path):
+    (tmp_path / "build.gradle.kts").write_text("plugins { kotlin(\"jvm\") }")
+    (tmp_path / "Main.kt").write_text("fun main() {}")
+
+    result = runner.invoke(app, ["analyze", str(tmp_path), "--json"])
+    assert result.exit_code == 0
+    assert "health_score" in result.output
 
 
 def test_summarize_command(tmp_path, monkeypatch):

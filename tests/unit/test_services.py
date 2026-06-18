@@ -27,11 +27,20 @@ def test_chat_slash_organize_dry_run(tmp_path, fake_llm, memory_service, config_
     assert "dry-run" in result
 
 
+def test_chat_slash_context(tmp_path, fake_llm, memory_service, config_with_openai, monkeypatch):
+    monkeypatch.setenv("SMITH_DB_PATH", str(tmp_path / "ctx.db"))
+    (tmp_path / "Main.kt").write_text("fun main() {}")
+    service = ChatService(fake_llm, memory_service, config_with_openai)
+    result = service._handle_slash_command(f"/context {tmp_path}")
+    assert "# Project Context" in result
+    assert "completed in" in result
+
+
 def test_chat_slash_analyze_structure_only(tmp_path, fake_llm, memory_service, config_with_openai):
     (tmp_path / "Main.kt").write_text("fun main() {}")
     service = ChatService(fake_llm, memory_service, config_with_openai)
     result = service._handle_slash_command(f"/analyze {tmp_path} --structure-only")
-    assert "Project Structure" in result
+    assert "# Project Context" in result
     assert len(fake_llm.calls) == 0
 
 

@@ -9,6 +9,13 @@ CREATE TABLE IF NOT EXISTS conversations (
     content TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS project_contexts (
+    id INTEGER PRIMARY KEY,
+    project_path TEXT NOT NULL,
+    generated_at TEXT NOT NULL,
+    context_json TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_project_contexts_path ON project_contexts(project_path);
 """
 
 
