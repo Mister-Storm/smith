@@ -3,8 +3,9 @@ import shlex
 
 import typer
 
-from smith.core.config import Config
-from smith.core.formatting import format_completion_line
+from smith.cli.banner import render_slash_commands_table, render_startup_banner
+from smith.core.config import Config, get_active_model
+from smith.core.formatting import format_result_footer
 from smith.llm.base import LLMProvider
 from smith.memory.service import MemoryService
 from smith.services.tool_runner import (
@@ -22,25 +23,26 @@ SYSTEM_PROMPT = """You are Smith, a benevolent personal AI operator.
 You help with software development, file organization, document analysis, and productivity.
 Be concise and practical."""
 
-SLASH_COMMANDS_HELP = """
-Slash commands:
-  /context <path>                        Generate project context snapshot
-  /duplicates <path> [--min-size N]     Find duplicate files
-  /organize <path> [--dry-run]           Organize files (asks for confirmation)
-  /analyze <path> [--structure-only]     Analyze a project
-  /analyze <path> -o report.md           Analyze and save report
-  /summarize <pdf> [--study-notes]       Summarize a PDF
-  /summarize <pdf> --pages N             Summarize first N pages
-  /exit                                  Quit
-"""
 
-
-def _format_tool_response(result: ToolResult, tool_name: str) -> str:
+def _format_tool_response(
+    result: ToolResult,
+    tool_name: str,
+    *,
+    provider: str | None = None,
+    model: str | None = None,
+) -> str:
     parts = [result.message]
     if result.output_path:
         parts.append(f"Report written to {result.output_path}")
     if result.success:
-        parts.append(format_completion_line(tool_name, max(result.execution_time_ms, 0)))
+        parts.append(
+            format_result_footer(
+                tool_name,
+                max(result.execution_time_ms, 0),
+                provider=provider,
+                model=model,
+            )
+        )
     return "\n".join(parts)
 
 
@@ -77,12 +79,13 @@ class ChatService:
         self._llm = llm
         self._memory = memory
         self._config = config
+        self._provider = llm.name
+        self._model = get_active_model(config) or "—"
 
     def run(self) -> None:
         session_id = self._memory.start_session()
-        typer.echo(f"Smith chat (provider: {self._llm.name}, session: {session_id[:8]}...)")
-        typer.echo("Type a message or use a slash command. /exit to quit.")
-        typer.echo(SLASH_COMMANDS_HELP)
+        render_startup_banner(self._config, self._memory)
+        render_slash_commands_table()
 
         while True:
             try:
@@ -116,7 +119,14 @@ class ChatService:
             parts.append(f"{label}: {content}")
         parts.append(f"User: {user_input}")
         prompt = "\n".join(parts)
-        return self._llm.generate(prompt)
+        body = self._llm.generate(prompt)
+        footer = format_result_footer(
+            "chat",
+            0,
+            provider=self._provider,
+            model=self._model,
+        )
+        return f"{body}\n\n{footer}"
 
     def _handle_slash_command(self, user_input: str) -> str:
         try:
@@ -137,11 +147,25 @@ class ChatService:
         if command == "/organize":
             return _format_tool_response(self._cmd_organize(args), "organize")
         if command == "/analyze":
-            return _format_tool_response(self._cmd_analyze(args), "analyze")
+            return _format_tool_response(
+                self._cmd_analyze(args),
+                "analyze",
+                provider=self._provider if not self._analyze_structure_only(args) else None,
+                model=self._model if not self._analyze_structure_only(args) else None,
+            )
         if command == "/summarize":
-            return _format_tool_response(self._cmd_summarize(args), "summarize")
+            return _format_tool_response(
+                self._cmd_summarize(args),
+                "summarize",
+                provider=self._provider,
+                model=self._model,
+            )
 
         return f"Unknown command: {command}. Type /exit to quit."
+
+    def _analyze_structure_only(self, args: list[str]) -> bool:
+        _, flag = _parse_flag(args, "--structure-only")
+        return flag
 
     def _cmd_context(self, args: list[str]) -> ToolResult:
         if not args:

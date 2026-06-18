@@ -20,7 +20,7 @@ def test_duplicates_command(tmp_path):
     result = runner.invoke(app, ["duplicates", str(tmp_path)])
     assert result.exit_code == 0
     assert "Group 1" in result.output
-    assert "completed in" in result.output
+    assert "Execution time:" in result.output
 
 
 def test_organize_dry_run(tmp_path):
@@ -44,7 +44,8 @@ def test_analyze_command(tmp_path, monkeypatch):
 
     assert result.exit_code == 0
     assert "Project Analysis" in result.output
-    assert "Analysis completed in" in result.output
+    assert "✓ Analysis completed" in result.output
+    assert "Execution time:" in result.output
 
 
 def test_analyze_structure_only(tmp_path):
@@ -52,7 +53,7 @@ def test_analyze_structure_only(tmp_path):
 
     result = runner.invoke(app, ["analyze", str(tmp_path), "--structure-only"])
     assert result.exit_code == 0
-    assert "# Project Context" in result.output
+    assert "Project Context" in result.output
 
 
 def test_analyze_output_file(tmp_path, monkeypatch):
@@ -80,8 +81,8 @@ def test_context_command(tmp_path, monkeypatch):
 
     result = runner.invoke(app, ["context", str(tmp_path)])
     assert result.exit_code == 0
-    assert "# Project Context" in result.output
-    assert "Context completed in" in result.output
+    assert "Project Context" in result.output
+    assert "✓ Context completed" in result.output
 
 
 def test_analyze_json(tmp_path):
@@ -100,6 +101,7 @@ def test_summarize_command(tmp_path, monkeypatch):
 
     with patch("smith.cli.commands.summarize.get_llm_provider") as mock_get:
         fake = MagicMock()
+        fake.generate.return_value = "Summary of the document."
         mock_get.return_value = fake
 
         with patch("smith.tools.summarize_pdf.PdfReader") as mock_reader:
@@ -112,7 +114,7 @@ def test_summarize_command(tmp_path, monkeypatch):
             result = runner.invoke(app, ["summarize", str(pdf)])
 
     assert result.exit_code == 0
-    assert "Summarization completed in" in result.output
+    assert "✓ Summarization completed" in result.output
 
 
 def test_doctor_command(monkeypatch, tmp_path):
@@ -160,9 +162,48 @@ def test_summarize_failure(tmp_path, monkeypatch):
     assert result.exit_code == 1
 
 
-def test_chat_missing_config(monkeypatch):
+def test_analyze_missing_config(monkeypatch, tmp_path):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    (tmp_path / "Main.kt").write_text("fun main(){}")
 
-    result = runner.invoke(app, ["chat"])
+    result = runner.invoke(app, ["analyze", str(tmp_path)])
     assert result.exit_code == 1
+    assert "smith setup" in result.output
+
+
+def test_help_command():
+    result = runner.invoke(app, ["help"])
+    assert result.exit_code == 0
+    assert "Smith" in result.output
+    assert "smith setup" in result.output
+
+
+def test_version_command_integration(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    result = runner.invoke(app, ["version"])
+    assert result.exit_code == 0
+    assert "Provider:" in result.output
+
+
+def test_chat_missing_config(monkeypatch, tmp_path):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.setenv("SMITH_HOME", str(tmp_path / "smith"))
+    monkeypatch.setenv("SMITH_CONFIG_PATH", str(tmp_path / "smith/config.toml"))
+    monkeypatch.setenv("SMITH_DB_PATH", str(tmp_path / "smith/memory.db"))
+
+    def fake_setup(config):
+        from smith.core.config import Config
+
+        return Config.load(load_env=False)
+
+    with patch("smith.cli.commands.chat.ensure_provider_configured", fake_setup):
+        with patch("smith.cli.commands.chat.get_llm_provider") as mock_llm:
+            fake = MagicMock()
+            fake.name = "Fake"
+            mock_llm.return_value = fake
+            with patch("smith.services.chat.ChatService.run"):
+                result = runner.invoke(app, ["chat"])
+
+    assert result.exit_code == 0

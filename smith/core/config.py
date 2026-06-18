@@ -60,8 +60,6 @@ class Config:
                     load_dotenv(env_in_smith)
 
         toml_keys = {
-            "OPENAI_API_KEY": "openai_api_key",
-            "DEEPSEEK_API_KEY": "deepseek_api_key",
             "SMITH_LLM_PROVIDER": "smith_llm_provider",
             "OPENAI_MODEL": "openai_model",
             "DEEPSEEK_MODEL": "deepseek_model",
@@ -83,8 +81,8 @@ class Config:
         db_path = Path(db_path_str).expanduser() if db_path_str else default_db
 
         return cls(
-            openai_api_key=_get("OPENAI_API_KEY"),
-            deepseek_api_key=_get("DEEPSEEK_API_KEY"),
+            openai_api_key=os.environ.get("OPENAI_API_KEY", "").strip(),
+            deepseek_api_key=os.environ.get("DEEPSEEK_API_KEY", "").strip(),
             llm_provider=_get("SMITH_LLM_PROVIDER").lower(),
             db_path=db_path,
             openai_model=_get("OPENAI_MODEL", "gpt-4o-mini"),
@@ -92,6 +90,26 @@ class Config:
             config_file_path=config_path,
             config_file_loaded=config_file_loaded,
         )
+
+    def save(self) -> None:
+        """Persist non-secret settings to config.toml. Never writes API keys."""
+        path = self.config_file_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        home = Path.home()
+        try:
+            db_display = f"~/{self.db_path.relative_to(home)}"
+        except ValueError:
+            db_display = str(self.db_path)
+
+        lines: list[str] = []
+        if self.llm_provider:
+            lines.append(f'smith_llm_provider = "{self.llm_provider}"')
+        lines.append(f'db_path = "{db_display}"')
+        lines.append(f'openai_model = "{self.openai_model}"')
+        lines.append(f'deepseek_model = "{self.deepseek_model}"')
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        self.config_file_loaded = True
 
 
 def resolve_provider(config: Config) -> str:
@@ -131,3 +149,21 @@ def describe_provider_selection(config: Config) -> tuple[str, str]:
 
     display_names = {"openai": "OpenAI", "deepseek": "DeepSeek"}
     return display_names.get(provider, provider.capitalize()), reason
+
+
+def get_active_model(config: Config) -> str | None:
+    try:
+        provider = resolve_provider(config)
+    except ConfigurationError:
+        return None
+    if provider == "openai":
+        return config.openai_model
+    return config.deepseek_model
+
+
+def needs_setup(config: Config) -> bool:
+    try:
+        resolve_provider(config)
+        return False
+    except ConfigurationError:
+        return True
