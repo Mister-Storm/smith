@@ -1,202 +1,178 @@
-# Smith
+<p align="center">
+  <img src="docs/assets/logo/smith.png" alt="Smith logo" width="120">
+</p>
+
+<h1 align="center">SMITH</h1>
+
+<p align="center">
+  <strong>Organize Complexity</strong><br>
+  Personal AI Operator for Developers
+</p>
 
 <p align="center">
   <a href="https://github.com/Mister-Storm/smith/actions/workflows/ci.yml"><img src="https://github.com/Mister-Storm/smith/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.12+-blue.svg" alt="Python 3.12+"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/coverage-%E2%89%A580%25-brightgreen.svg" alt="Coverage ≥80%">
-</p>
-
-<p align="center">
-  <strong>A benevolent personal AI operator for developers.</strong><br>
-  Not a chatbot wrapper — a practical CLI with real tools for code, files, and documents.
+  <img src="https://img.shields.io/badge/PyPI-smith--ai-blue.svg" alt="PyPI">
 </p>
 
 <p align="center">
   <a href="#quick-start">Quick Start</a> ·
+  <a href="#demo">Demo</a> ·
+  <a href="#features">Features</a> ·
   <a href="#usage">Usage</a> ·
-  <a href="#configuration">Configuration</a> ·
-  <a href="#development">Development</a> ·
+  <a href="#roadmap">Roadmap</a> ·
   <a href="#contributing">Contributing</a>
 </p>
 
 ---
 
-## About
+## Overview
 
-**Smith** is an open-source, MIT-licensed personal AI assistant inspired by the idea of a capable operator at your side — one that helps you get work done instead of just talking.
+**Smith** is an open-source AI operator designed to help developers manage projects, documents, files, and daily workstation tasks using modern LLMs such as [DeepSeek](https://platform.deepseek.com/) and [OpenAI](https://platform.openai.com/).
 
-Smith ships as a Python CLI with:
+It combines:
 
-- An interactive **chat** session backed by persistent memory
-- **Tools** you can run directly or invoke from chat via slash commands
-- Support for **OpenAI** and **DeepSeek** as LLM providers
-- A **`doctor`** command to diagnose installation and configuration
+- **AI chat** with persistent memory
+- **Project analysis** and architecture intelligence
+- **PDF summarization**
+- **Duplicate file detection**
+- **Workstation automation**
 
-Smith is built for software development, file organization, document analysis, and everyday productivity.
+All from a **terminal-first** experience — no web UI required.
 
-## Features
-
-| Feature | Description |
-|---------|-------------|
-| **Setup** | Interactive wizard for provider, env keys, and memory DB |
-| **Help** | Rich usage guide with examples (`smith help`) |
-| **Version** | Show version, provider, and model (`smith version`) |
-| **Chat** | REPL with Rich startup banner and slash commands |
-| **Context** | Generate structured project context (languages, frameworks, architecture) |
-| **Analyze** | Analyze projects using ProjectContext; markdown report, health score, JSON output |
-| **Duplicates** | Find duplicate files by SHA-256 hash and report wasted disk space |
-| **Organize** | Sort files into category folders (Documents, Images, Code, etc.) |
-| **Summarize** | Extract and summarize PDF documents with optional study notes |
-| **Doctor** | Validate Python, config, API keys, memory DB, and filesystem access |
+---
 
 ## Quick Start
 
-### Requirements
-
-- Python 3.12+
-- An API key for [OpenAI](https://platform.openai.com/) and/or [DeepSeek](https://platform.deepseek.com/)
-
-### Install (recommended)
+**Requirements:** Python 3.12+ · OpenAI and/or DeepSeek API key
 
 ```bash
 pipx install smith-ai
+
 smith setup
 smith doctor
+smith chat
 ```
 
-API keys are stored in environment variables (via `~/.smith/env.sh` or your shell profile), **never** in `config.toml`.
-
-### Install from source (development)
+<details>
+<summary>Install from source (development)</summary>
 
 ```bash
 git clone https://github.com/Mister-Storm/smith.git
 cd smith
-
-python3 -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-
+python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-```
-
-### Configure
-
-Run the interactive setup wizard (no manual file editing required):
-
-```bash
 smith setup
 ```
 
-Or set environment variables manually:
+</details>
 
-```bash
-cp .env.example .env
-# Edit .env and set OPENAI_API_KEY or DEEPSEEK_API_KEY
-```
+---
 
-Verify your setup:
+## Demo
 
-```bash
-smith doctor
-smith doctor --test-provider   # optional: test LLM connectivity
-smith version                  # show version, provider, model
-```
+![Smith Demo](docs/assets/demo.gif)
+
+> **Note:** Demo GIF will be added after Sprint UX. See [roadmap](#roadmap).
+
+---
+
+## Features
+
+| Feature | Status |
+|---------|--------|
+| Chat | ✅ |
+| Project Analysis | ✅ |
+| Project Context | ✅ |
+| PDF Summarization | ✅ |
+| Duplicate Detection | ✅ |
+| Downloads Organization | ✅ |
+| Local Memory | ✅ |
+| Setup Wizard | ✅ |
+| Rich Terminal UI | ✅ |
+| PyPI Distribution | 🚧 |
+
+---
+
+## Screenshots
+
+Placeholders for upcoming CLI captures.
+
+### Chat
+
+![Chat](docs/assets/chat.png)
+
+### Analyze Project
+
+![Analyze](docs/assets/analyze.png)
+
+### Doctor
+
+![Doctor](docs/assets/doctor.png)
+
+---
 
 ## Usage
 
-### Workstation tools (Sprint 2)
-
-Every tool is available via **CLI commands** and **chat slash commands**. Successful runs show a standardized footer with execution time and a suggested next command.
+Every tool works as a **CLI command** and a **chat slash command**. Runs show execution time and a suggested next step.
 
 ```bash
 smith help
 smith version
-smith setup
 smith context .
-smith analyze .
-smith analyze . --structure-only          # offline scan, no LLM
-smith analyze . --json                    # JSON health + metadata
-smith summarize article.pdf
-smith summarize article.pdf --pages 10
+smith analyze . --structure-only
+smith analyze . --json
+smith summarize document.pdf --pages 10
 smith duplicates ~/Downloads
 smith organize ~/Downloads --dry-run
-smith organize ~/Downloads
-```
-
-```
-/context .
-/analyze .
-/analyze . --structure-only
-/summarize article.pdf
-/summarize article.pdf --study-notes --pages 10
-/duplicates ~/Downloads
-/duplicates ~/Downloads --min-size 1024
-/organize ~/Downloads --dry-run
-/organize ~/Downloads
-```
-
-### All commands
-
-```bash
-# Setup and info
-smith setup
-smith help
-smith version
-
-# Interactive chat with slash commands
-smith chat
-
-# Generate project context (deterministic, no LLM)
-smith context ./my-project
-
-# Analyze a project (markdown report)
-smith analyze ./my-project
-smith analyze ./my-project --output report.md
-smith analyze ./my-project --structure-only
-smith analyze ./my-project --json
-
-# Find duplicate files
-smith duplicates ~/Downloads
-smith duplicates ~/Downloads --min-size 1024
-
-# Organize a folder by file type
-smith organize ~/Downloads --dry-run
-smith organize ~/Downloads
-
-# Summarize a PDF
-smith summarize article.pdf
-smith summarize article.pdf --study-notes
-smith summarize article.pdf --pages 10
-
-# Diagnostics
-smith doctor
 smith doctor --test-provider
 ```
 
-Global flags: `--verbose` / `-v`, `--dry-run` (for destructive commands).
+**Chat slash commands**
+
+```
+/context .          /analyze . --structure-only
+/summarize doc.pdf  /duplicates ~/Downloads
+/organize ~/Downloads --dry-run
+/exit
+```
+
+Global flags: `--verbose` / `-v` · `--dry-run`
+
+---
+
+## Philosophy
+
+Smith is built on a few simple ideas:
+
+| Principle | What it means |
+|-----------|---------------|
+| **Terminal first** | Your shell is the control plane. No browser, no dashboard. |
+| **Provider agnostic** | OpenAI and DeepSeek today; architecture ready for more. |
+| **Developer focused** | Project analysis, context, and file tools — not generic chat. |
+| **Local configuration** | Settings in `~/.smith/`; API keys in environment variables only. |
+| **Open source** | MIT licensed. Inspect, fork, contribute. |
+| **Automation over complexity** | Real tools with deterministic output, not agent orchestration theater. |
+
+---
 
 ## Configuration
 
-Smith loads settings in this order:
+Settings load in order: `~/.smith/config.toml` → `.env` → environment variables.
 
-1. Optional `~/.smith/config.toml` (provider, models, db path — **no API keys**)
-2. `.env` file (project root or `~/.smith/.env`)
-3. Environment variables (API keys must be set here)
+API keys **never** go in `config.toml`. Use `smith setup` or `source ~/.smith/env.sh`.
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `OPENAI_API_KEY` | OpenAI API key | — |
-| `DEEPSEEK_API_KEY` | DeepSeek API key | — |
-| `SMITH_LLM_PROVIDER` | Force provider: `openai` or `deepseek` | auto |
-| `SMITH_DB_PATH` | SQLite database path | `~/.smith/memory.db` |
-| `SMITH_CONFIG_PATH` | Config file path | `~/.smith/config.toml` |
-| `SMITH_HOME` | Smith home directory | `~/.smith` |
-| `OPENAI_MODEL` | OpenAI model name | `gpt-4o-mini` |
-| `DEEPSEEK_MODEL` | DeepSeek model name | `deepseek-chat` |
+| Variable | Description |
+|----------|-------------|
+| `OPENAI_API_KEY` / `DEEPSEEK_API_KEY` | LLM credentials (required) |
+| `SMITH_LLM_PROVIDER` | Force `openai` or `deepseek` |
+| `SMITH_DB_PATH` | SQLite memory path (default `~/.smith/memory.db`) |
+| `OPENAI_MODEL` / `DEEPSEEK_MODEL` | Model names |
 
-**Provider selection:** OpenAI is used when `OPENAI_API_KEY` is set; otherwise DeepSeek. Override with `SMITH_LLM_PROVIDER`.
-
-Optional `~/.smith/config.toml` (non-secret settings only):
+<details>
+<summary>Example config.toml (non-secret settings only)</summary>
 
 ```toml
 smith_llm_provider = "openai"
@@ -205,79 +181,82 @@ deepseek_model = "deepseek-chat"
 db_path = "~/.smith/memory.db"
 ```
 
-API keys via environment or `source ~/.smith/env.sh` (created by `smith setup`).
+</details>
 
-## Releasing to PyPI
+---
 
-1. Configure [PyPI trusted publishing](https://docs.pypi.org/trusted-publishers/) for the repository
-2. Create a GitHub Release with tag `v0.x.x`
-3. The publish workflow builds and uploads `smith-ai` to PyPI
-4. Verify: `pipx install smith-ai`
+## Roadmap
 
-## Chat Slash Commands
+### Completed
 
-Inside `smith chat`, use slash commands to run tools without leaving the session:
+- Chat with slash commands and SQLite memory
+- Analyze Project (health score, JSON output, architecture observations)
+- Project Context (`smith context`)
+- Summarize PDF
+- Duplicate Detection
+- Organize Downloads
+- Rich Terminal UI (banner, tables, markdown)
+- Setup Wizard (`smith setup`, `smith help`, `smith version`)
 
-```
-/context <path>                         Generate project context snapshot
-/duplicates <path> [--min-size N]       Find duplicate files
-/organize <path> [--dry-run]            Organize files (asks for confirmation)
-/analyze <path> [--structure-only]      Analyze a project
-/analyze <path> -o report.md             Save report to file
-/summarize <pdf> [--study-notes]        Summarize a PDF
-/summarize <pdf> --pages N              Summarize first N pages
-/exit                                   Quit
-```
+### In Progress
 
-Free-form messages go to the LLM with conversation context from memory.
+- PyPI distribution (`pipx install smith-ai`)
+- README demo GIF and screenshots
 
-## Safety
+### Future
 
-Smith treats destructive actions carefully:
+- Workspace automation
+- Additional LLM providers
+- Coding agent and refactoring assistant (via `ProjectContext`)
+- Architecture review reports
 
-- **`smith organize`** shows a plan first and asks for confirmation before moving files
-- Use **`--dry-run`** anywhere applicable to preview changes without modifying anything
+See [docs/future-roadmap.md](docs/future-roadmap.md) for details.
+
+---
+
+## Brand Assets
+
+Smith has an official visual identity. Assets live under [`docs/assets/logo/`](docs/assets/logo/):
+
+| Asset | Path | Use |
+|-------|------|-----|
+| Primary logo | `docs/assets/logo/smith.png` | README hero, docs |
+| Dark mode | `smith-dark.png` | *planned* |
+| Favicon | `favicon.ico` | *planned* |
+| Terminal icon | `smith-icon.png` | *planned* |
+
+The logo appears once in this README (hero). See [`docs/assets/logo/README.md`](docs/assets/logo/README.md) for the full asset layout.
+
+---
 
 ## Development
 
 ```bash
-# Lint
-ruff check .
-ruff format .
-
-# Test (≥80% coverage required)
+ruff check . && ruff format .
 pytest --cov=smith --cov-fail-under=80
 ```
 
-CI runs on every push and pull request: lint, format check, tests with coverage, and build.
+**Doctor exit codes:** `0` healthy · `1` warnings · `2` critical
 
-## Doctor Exit Codes
-
-| Code | Meaning |
-|------|---------|
-| `0` | All checks pass |
-| `1` | Warnings present (e.g. missing config file, connectivity failure) |
-| `2` | Critical failures (e.g. no provider, DB or filesystem errors) |
-
-## Contributing
-
-Contributions are welcome! Whether it's a bug report, feature request, or pull request:
-
-1. Fork the repository
-2. Create a branch for your change
-3. Run `ruff check .` and `pytest --cov=smith --cov-fail-under=80`
-4. Open a pull request with a clear description
-
-Issues and discussions are open for questions, ideas, and feedback.
-
-## License
-
-This project is open source and released under the [MIT License](LICENSE).
-
-Copyright (c) 2026 Smith Contributors.
+**Releasing to PyPI:** GitHub Release → publish workflow → `pipx install smith-ai`
 
 ---
 
+## Contributing
+
+Contributions welcome — bugs, ideas, and pull requests.
+
+1. Fork the repo
+2. Create a branch
+3. Run lint and tests
+4. Open a PR with a clear description
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE). Copyright (c) 2026 Smith Contributors.
+
 <p align="center">
-  Made with care by the Smith community.
+  <sub>Smith — organize complexity.</sub>
 </p>
