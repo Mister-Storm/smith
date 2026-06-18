@@ -54,6 +54,7 @@ pipx install smith-ai
 smith setup
 smith doctor
 smith chat
+smith context .
 ```
 
 <details>
@@ -122,6 +123,7 @@ Every tool works as a **CLI command** and a **chat slash command**. Runs show ex
 smith help
 smith version
 smith context .
+smith refresh-context .
 smith analyze . --structure-only
 smith analyze . --json
 smith summarize document.pdf --pages 10
@@ -133,13 +135,32 @@ smith doctor --test-provider
 **Chat slash commands**
 
 ```
-/context .          /analyze . --structure-only
-/summarize doc.pdf  /duplicates ~/Downloads
+/context              /refresh-context
+/analyze . --structure-only
+/summarize doc.pdf    /duplicates ~/Downloads
 /organize ~/Downloads --dry-run
 /exit
 ```
 
 Global flags: `--verbose` / `-v` · `--dry-run`
+
+---
+
+## Project Context
+
+Smith can inspect your workspace once and reuse that metadata in chat.
+
+```bash
+smith context .                  # analyze and save
+smith refresh-context .          # force re-analysis
+smith context . --output ctx.json
+```
+
+**Storage:** `.smith/project_context.json` in the project directory (human-readable JSON, no database, no embeddings).
+
+**What it detects:** language, framework, build system, databases, infrastructure, CI/CD, and modules — all via deterministic file inspection (no LLM tokens).
+
+**Chat integration:** When you run `smith chat` inside a project, Smith loads `.smith/project_context.json` and injects a compact context block into the system prompt (max 500 characters). Use `/context` to view loaded context and `/refresh-context` to rebuild it.
 
 ---
 

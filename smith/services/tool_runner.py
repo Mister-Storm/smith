@@ -4,9 +4,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from smith.core.config import Config
 from smith.llm.base import LLMProvider
-from smith.memory.project_contexts import ProjectContextStore
 from smith.tools.analyze_project import AnalyzeProjectTool
 from smith.tools.base import Tool, ToolResult
 from smith.tools.duplicates import FindDuplicateFilesTool
@@ -61,20 +59,16 @@ def run_analyze(
 def run_context(
     path: str | Path,
     *,
-    config: Config | None = None,
     save: bool = True,
 ) -> ToolResult:
-    store = None
-    if save and config:
-        store = ProjectContextStore(config.db_path)
     tool = ProjectContextTool()
-    kwargs: dict[str, Any] = {"path": str(path), "save": save}
-    if store:
-        kwargs["store"] = store
-    result = _run_tool(tool, **kwargs)
-    if store:
-        store.close()
+    result = _run_tool(tool, path=str(path), save=save, refresh=False)
     return result
+
+
+def run_refresh_context(path: str | Path) -> ToolResult:
+    tool = ProjectContextTool()
+    return _run_tool(tool, path=str(path), save=True, refresh=True)
 
 
 def run_summarize(

@@ -46,7 +46,8 @@ def render_slash_commands_table() -> None:
     table.add_column("Description")
 
     commands = [
-        ("/context <path>", "Generate project context snapshot"),
+        ("/context", "Show loaded project context"),
+        ("/refresh-context", "Rebuild project context for workspace"),
         ("/duplicates <path>", "Find duplicate files"),
         ("/organize <path>", "Organize files (asks for confirmation)"),
         ("/analyze <path>", "Analyze a project"),

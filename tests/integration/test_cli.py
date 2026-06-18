@@ -74,15 +74,27 @@ def test_analyze_output_file(tmp_path, monkeypatch):
     assert "Java" in content
 
 
-def test_context_command(tmp_path, monkeypatch):
-    monkeypatch.setenv("SMITH_DB_PATH", str(tmp_path / "ctx.db"))
-    (tmp_path / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
-    (tmp_path / "Main.kt").write_text("fun main() {}")
+def test_context_command(tmp_path):
+    project = tmp_path / "proj"
+    project.mkdir()
+    (project / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
+    (project / "Main.kt").write_text("fun main() {}")
 
-    result = runner.invoke(app, ["context", str(tmp_path)])
+    result = runner.invoke(app, ["context", str(project)])
     assert result.exit_code == 0
-    assert "Project Context" in result.output
-    assert "✓ Context completed" in result.output
+    assert "Project: proj" in result.output
+    assert (project / ".smith" / "project_context.json").is_file()
+
+
+def test_refresh_context_command(tmp_path):
+    project = tmp_path / "proj"
+    project.mkdir()
+    (project / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
+    (project / "Main.kt").write_text("fun main() {}")
+
+    result = runner.invoke(app, ["refresh-context", str(project)])
+    assert result.exit_code == 0
+    assert "Project: proj" in result.output
 
 
 def test_analyze_json(tmp_path):

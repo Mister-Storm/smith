@@ -1,4 +1,3 @@
-import dataclasses
 from unittest.mock import patch
 
 from smith.services.chat import ChatService
@@ -29,12 +28,50 @@ def test_chat_slash_organize_dry_run(tmp_path, fake_llm, memory_service, config_
 
 
 def test_chat_slash_context(tmp_path, fake_llm, memory_service, config_with_openai):
-    (tmp_path / "Main.kt").write_text("fun main() {}")
-    config = dataclasses.replace(config_with_openai, db_path=tmp_path / "ctx.db")
-    service = ChatService(fake_llm, memory_service, config)
-    result = service._handle_slash_command(f"/context {tmp_path}")
-    assert "# Project Context" in result
-    assert "Execution time:" in result
+    project = tmp_path / "proj"
+    project.mkdir()
+    (project / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
+    (project / "Main.kt").write_text("fun main() {}")
+    from smith.services.project_context import ProjectContextService
+
+    service_ctx = ProjectContextService()
+    service_ctx.refresh(project)
+
+    service = ChatService(fake_llm, memory_service, config_with_openai, workspace=project)
+    result = service._handle_slash_command("/context")
+    assert "Project: proj" in result
+
+
+def test_chat_context_injection(fake_llm, memory_service, config_with_openai, tmp_path):
+    project = tmp_path / "app"
+    project.mkdir()
+    (project / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
+    (project / "App.kt").write_text("class App\n")
+    from smith.services.project_context import ProjectContextService
+
+    ProjectContextService().refresh(project)
+
+    service = ChatService(fake_llm, memory_service, config_with_openai, workspace=project)
+    session_id = memory_service.start_session()
+    memory_service.add_message(session_id, "user", "hello")
+    service._handle_chat(session_id, "hello")
+
+    assert len(fake_llm.calls) == 1
+    prompt = fake_llm.calls[0][0]
+    assert "Current Project Context" in prompt
+    assert "app" in prompt.lower() or "kotlin" in prompt.lower()
+
+
+def test_chat_slash_refresh_context(tmp_path, fake_llm, memory_service, config_with_openai):
+    project = tmp_path / "proj"
+    project.mkdir()
+    (project / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
+    (project / "Main.kt").write_text("fun main() {}\n")
+
+    service = ChatService(fake_llm, memory_service, config_with_openai, workspace=project)
+    result = service._handle_slash_command("/refresh-context")
+    assert "Project: proj" in result
+    assert service._project_context is not None
 
 
 def test_chat_slash_analyze_structure_only(tmp_path, fake_llm, memory_service, config_with_openai):

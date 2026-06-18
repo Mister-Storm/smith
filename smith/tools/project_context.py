@@ -51,7 +51,7 @@ CI_MARKERS = {
 
 
 @dataclass(slots=True)
-class ProjectContext:
+class AnalysisProjectContext:
     language: str | None
     frameworks: list[str]
     build_system: str | None
@@ -71,7 +71,7 @@ class ProjectContext:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ProjectContext":
+    def from_dict(cls, data: dict) -> "AnalysisProjectContext":
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
@@ -224,7 +224,7 @@ def _detect_layers(path: Path) -> list[str]:
     return sorted(layers)
 
 
-def _detect_patterns(context: ProjectContext) -> list[str]:
+def _detect_patterns(context: AnalysisProjectContext) -> list[str]:
     patterns: list[str] = []
     layers = set(context.architecture_layers)
     if {"api", "service", "repository"}.issubset(layers) or {
@@ -280,13 +280,13 @@ def _detect_large_files(path: Path, line_threshold: int = 400) -> list[str]:
     return large[:5]
 
 
-def generate_project_context(project_path: Path) -> ProjectContext:
+def generate_project_context(project_path: Path) -> AnalysisProjectContext:
     path = project_path.expanduser().resolve()
     languages = _detect_languages(path)
     build_system = _detect_build_system(path)
     has_build = build_system is not None
 
-    context = ProjectContext(
+    context = AnalysisProjectContext(
         language=languages[0] if languages else None,
         frameworks=_detect_frameworks(path),
         build_system=build_system,
@@ -306,7 +306,7 @@ def generate_project_context(project_path: Path) -> ProjectContext:
     return context
 
 
-def compute_health_score(context: ProjectContext) -> tuple[int, list[str]]:
+def compute_health_score(context: AnalysisProjectContext) -> tuple[int, list[str]]:
     score = 50
     issues: list[str] = []
 
@@ -352,7 +352,7 @@ def compute_health_score(context: ProjectContext) -> tuple[int, list[str]]:
     return max(0, min(100, score)), issues
 
 
-def generate_architecture_observations(context: ProjectContext) -> str:
+def generate_architecture_observations(context: AnalysisProjectContext) -> str:
     lines = ["## Architecture Observations", ""]
 
     if "Layered Architecture" in context.detected_patterns:
@@ -391,7 +391,7 @@ def generate_architecture_observations(context: ProjectContext) -> str:
     return "\n".join(lines)
 
 
-def context_to_markdown(context: ProjectContext) -> str:
+def context_to_markdown(context: AnalysisProjectContext) -> str:
     def section(title: str, items: list[str] | None, single: str | None = None) -> str:
         if single:
             body = single
@@ -425,7 +425,9 @@ def context_to_markdown(context: ProjectContext) -> str:
     return "\n".join(parts)
 
 
-def build_analysis_json(context: ProjectContext, health_score: int, issues: list[str]) -> dict:
+def build_analysis_json(
+    context: AnalysisProjectContext, health_score: int, issues: list[str]
+) -> dict:
     return {
         "health_score": health_score,
         "language": (context.language or "unknown").lower(),
@@ -446,30 +448,35 @@ class ProjectContextTool(Tool):
     description = "Generate structured project context snapshot"
 
     def execute(self, **kwargs) -> ToolResult:
+        from smith.services.project_context import ProjectContextService, format_context_text
+
         project_path = Path(kwargs["path"]).expanduser().resolve()
         save = bool(kwargs.get("save", True))
+        refresh = bool(kwargs.get("refresh", False))
 
         if not project_path.is_dir():
             return ToolResult(success=False, message=f"Not a directory: {project_path}")
 
-        context = generate_project_context(project_path)
-        health_score, issues = compute_health_score(context)
-        markdown = context_to_markdown(context)
-        health_section = f"\n## Project Health\n\nScore: {health_score}/100\n"
-        message = markdown + health_section
+        service = ProjectContextService()
+        try:
+            if refresh:
+                context = service.refresh(project_path)
+            else:
+                context = service.build(project_path)
+                if save:
+                    service.save(project_path, context)
+        except NotADirectoryError as exc:
+            return ToolResult(success=False, message=str(exc))
 
+        message = format_context_text(context)
         metadata = {
-            "health_score": health_score,
-            "issues": issues,
             "context": context.to_dict(),
+            "context_path": str(service.context_path(project_path)),
         }
 
-        if save and kwargs.get("store"):
-            kwargs["store"].save(context)
-
-        logger.info("Tool context path=%s score=%d", project_path, health_score)
+        logger.info("Tool context path=%s project=%s", project_path, context.project_name)
         return ToolResult(success=True, message=message, metadata=metadata)
 
 
-def context_to_json(context: ProjectContext, health_score: int, issues: list[str]) -> str:
+def context_to_json(context: AnalysisProjectContext, health_score: int, issues: list[str]) -> str:
     return json.dumps(build_analysis_json(context, health_score, issues), indent=2)

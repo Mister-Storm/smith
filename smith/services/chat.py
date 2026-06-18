@@ -1,5 +1,6 @@
 import logging
 import shlex
+from pathlib import Path
 
 import typer
 
@@ -8,11 +9,13 @@ from smith.core.config import Config, get_active_model
 from smith.core.formatting import format_result_footer
 from smith.llm.base import LLMProvider
 from smith.memory.service import MemoryService
+from smith.models.project_context import ProjectContext
+from smith.services.project_context import ProjectContextService, format_context_text
 from smith.services.tool_runner import (
     run_analyze,
-    run_context,
     run_duplicates,
     run_organize,
+    run_refresh_context,
     run_summarize,
 )
 from smith.tools.base import ToolResult
@@ -75,17 +78,34 @@ class ChatService:
         llm: LLMProvider,
         memory: MemoryService,
         config: Config,
+        *,
+        workspace: Path | None = None,
     ) -> None:
         self._llm = llm
         self._memory = memory
         self._config = config
         self._provider = llm.name
         self._model = get_active_model(config) or "—"
+        self._workspace = (workspace or Path.cwd()).resolve()
+        self._context_service = ProjectContextService()
+        self._project_context = self._context_service.load(self._workspace)
+
+    def _system_prompt(self) -> str:
+        parts = [SYSTEM_PROMPT]
+        if self._project_context:
+            parts.append("")
+            parts.append(self._project_context.to_prompt_block())
+        return "\n".join(parts)
 
     def run(self) -> None:
         session_id = self._memory.start_session()
         render_startup_banner(self._config, self._memory)
         render_slash_commands_table()
+        if self._project_context:
+            typer.echo(
+                f"Loaded project context for {self._project_context.project_name} "
+                f"from .smith/project_context.json"
+            )
 
         while True:
             try:
@@ -113,7 +133,7 @@ class ChatService:
 
     def _handle_chat(self, session_id: str, user_input: str) -> str:
         history = self._memory.get_recent_messages(session_id, limit=20)
-        parts = [SYSTEM_PROMPT, ""]
+        parts = [self._system_prompt(), ""]
         for role, content in history[:-1]:
             label = "User" if role == "user" else "Assistant"
             parts.append(f"{label}: {content}")
@@ -141,7 +161,9 @@ class ChatService:
         args = tokens[1:]
 
         if command == "/context":
-            return _format_tool_response(self._cmd_context(args), "context")
+            return self._cmd_show_context()
+        if command == "/refresh-context":
+            return self._cmd_refresh_context()
         if command == "/duplicates":
             return _format_tool_response(self._cmd_duplicates(args), "duplicates")
         if command == "/organize":
@@ -163,14 +185,24 @@ class ChatService:
 
         return f"Unknown command: {command}. Type /exit to quit."
 
+    def _cmd_show_context(self) -> str:
+        if not self._project_context:
+            return (
+                "No project context loaded. Run `smith context .` or `/refresh-context` "
+                "from a project directory."
+            )
+        return format_context_text(self._project_context)
+
+    def _cmd_refresh_context(self) -> str:
+        result = run_refresh_context(self._workspace)
+        if not result.success:
+            return result.message
+        self._project_context = ProjectContext.from_dict(result.metadata["context"])
+        return result.message
+
     def _analyze_structure_only(self, args: list[str]) -> bool:
         _, flag = _parse_flag(args, "--structure-only")
         return flag
-
-    def _cmd_context(self, args: list[str]) -> ToolResult:
-        if not args:
-            return ToolResult(success=False, message="Usage: /context <path>")
-        return run_context(args[0], config=self._config, save=True)
 
     def _cmd_duplicates(self, args: list[str]) -> ToolResult:
         min_size = 0
@@ -203,13 +235,9 @@ class ChatService:
         output = None
         args, out_val = _parse_option(args, "-o")
         if out_val:
-            from pathlib import Path
-
             output = Path(out_val)
         args, out_val = _parse_option(args, "--output")
         if out_val:
-            from pathlib import Path
-
             output = Path(out_val)
         if not args:
             return ToolResult(

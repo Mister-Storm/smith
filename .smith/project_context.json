@@ -1,0 +1,13 @@
+{
+  "project_name": "smith",
+  "language": "python",
+  "framework": "spring-boot",
+  "build_system": "python",
+  "database": [],
+  "infrastructure": [],
+  "ci_cd": [
+    "github-actions"
+  ],
+  "modules": [],
+  "generated_at": "2026-06-18T22:54:37Z"
+}

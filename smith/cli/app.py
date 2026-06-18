@@ -7,6 +7,7 @@ from smith.cli.commands import (
     doctor,
     duplicates,
     organize,
+    refresh_context,
     setup,
     summarize,
     version,
@@ -44,6 +45,7 @@ app.command()(setup.setup)
 app.command()(version.version)
 app.command(name="help")(help_cmd.help_cmd)
 app.command()(context.context)
+app.command(name="refresh-context")(refresh_context.refresh_context)
 app.command()(analyze.analyze)
 app.command()(duplicates.duplicates)
 app.command()(organize.organize)
