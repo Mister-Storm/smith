@@ -12,6 +12,7 @@ def context(
     ctx: typer.Context,
     path: Path = typer.Argument(..., help="Project directory to inspect"),
     output: Path | None = typer.Option(None, "--output", "-o", help="Export context as JSON"),
+    debug: bool = typer.Option(False, "--debug", help="Show detection trace for troubleshooting"),
 ) -> None:
     """Inspect a project and save workspace context to .smith/project_context.json.
 
@@ -19,8 +20,9 @@ def context(
 
         smith context .
         smith context . --output context.json
+        smith context . --debug
     """
-    result = run_context(path, save=True)
+    result = run_context(path, save=True, debug=debug)
     if not result.success:
         typer.echo(result.message, err=True)
         raise typer.Exit(code=1)

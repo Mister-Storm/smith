@@ -154,6 +154,7 @@ Smith can inspect your workspace once and reuse that metadata in chat.
 smith context .                  # analyze and save
 smith refresh-context .          # force re-analysis
 smith context . --output ctx.json
+smith context . --debug          # show detection trace (troubleshooting)
 ```
 
 **Storage:** `.smith/project_context.json` in the project directory (human-readable JSON, no database, no embeddings).

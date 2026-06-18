@@ -12,6 +12,7 @@ def refresh_context(
     ctx: typer.Context,
     path: Path = typer.Argument(..., help="Project directory to re-analyze"),
     output: Path | None = typer.Option(None, "--output", "-o", help="Export context as JSON"),
+    debug: bool = typer.Option(False, "--debug", help="Show detection trace for troubleshooting"),
 ) -> None:
     """Force a full re-analysis and overwrite stored project context.
 
@@ -19,8 +20,9 @@ def refresh_context(
 
         smith refresh-context .
         smith refresh-context . --output context.json
+        smith refresh-context . --debug
     """
-    result = run_refresh_context(path)
+    result = run_refresh_context(path, debug=debug)
     if not result.success:
         typer.echo(result.message, err=True)
         raise typer.Exit(code=1)

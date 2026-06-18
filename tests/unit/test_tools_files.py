@@ -1,7 +1,11 @@
 from pathlib import Path
 
 from smith.tools.duplicates import FindDuplicateFilesTool
-from smith.tools.fs_utils import format_bytes, should_skip_path
+from smith.tools.fs_utils import (
+    format_bytes,
+    should_skip_context_path,
+    should_skip_path,
+)
 from smith.tools.organize import OrganizeDownloadsTool, _categorize
 
 
@@ -15,6 +19,23 @@ def test_should_skip_path(tmp_path):
     normal.parent.mkdir()
     normal.write_text("x")
     assert should_skip_path(normal, tmp_path) is False
+
+
+def test_should_skip_context_path(tmp_path):
+    docs_file = tmp_path / "docs" / "guide.md"
+    docs_file.parent.mkdir(parents=True)
+    docs_file.write_text("# guide")
+    assert should_skip_context_path(docs_file, tmp_path) is True
+
+    test_file = tmp_path / "tests" / "test_app.py"
+    test_file.parent.mkdir(parents=True)
+    test_file.write_text("def test_x(): pass")
+    assert should_skip_context_path(test_file, tmp_path) is True
+
+    src_file = tmp_path / "src" / "app.py"
+    src_file.parent.mkdir(parents=True)
+    src_file.write_text("print('hi')")
+    assert should_skip_context_path(src_file, tmp_path) is False
 
 
 def test_format_bytes():

@@ -56,7 +56,7 @@ def test_generate_project_context_spring(spring_project: Path):
 
     assert context.language == "Kotlin"
     assert "Spring Boot" in context.frameworks
-    assert context.build_system == "Gradle Kotlin DSL"
+    assert context.build_system == "Gradle"
     assert "PostgreSQL" in context.databases
     assert "Docker" in context.containers
     assert "GitHub Actions" in context.ci_cd

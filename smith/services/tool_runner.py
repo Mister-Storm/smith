@@ -60,15 +60,16 @@ def run_context(
     path: str | Path,
     *,
     save: bool = True,
+    debug: bool = False,
 ) -> ToolResult:
     tool = ProjectContextTool()
-    result = _run_tool(tool, path=str(path), save=save, refresh=False)
+    result = _run_tool(tool, path=str(path), save=save, refresh=False, debug=debug)
     return result
 
 
-def run_refresh_context(path: str | Path) -> ToolResult:
+def run_refresh_context(path: str | Path, *, debug: bool = False) -> ToolResult:
     tool = ProjectContextTool()
-    return _run_tool(tool, path=str(path), save=True, refresh=True)
+    return _run_tool(tool, path=str(path), save=True, refresh=True, debug=debug)
 
 
 def run_summarize(
