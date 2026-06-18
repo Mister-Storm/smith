@@ -30,7 +30,7 @@ def test_analyze_structure_only(tmp_path):
 
 
 def test_analyze_json(tmp_path):
-    (tmp_path / "build.gradle.kts").write_text("plugins { kotlin(\"jvm\") }")
+    (tmp_path / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
     (tmp_path / "Main.kt").write_text("fun main() {}")
 
     tool = AnalyzeProjectTool(None)

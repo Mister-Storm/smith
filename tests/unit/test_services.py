@@ -1,3 +1,4 @@
+import dataclasses
 from unittest.mock import patch
 
 from smith.services.chat import ChatService
@@ -27,10 +28,10 @@ def test_chat_slash_organize_dry_run(tmp_path, fake_llm, memory_service, config_
     assert "dry-run" in result
 
 
-def test_chat_slash_context(tmp_path, fake_llm, memory_service, config_with_openai, monkeypatch):
-    monkeypatch.setenv("SMITH_DB_PATH", str(tmp_path / "ctx.db"))
+def test_chat_slash_context(tmp_path, fake_llm, memory_service, config_with_openai):
     (tmp_path / "Main.kt").write_text("fun main() {}")
-    service = ChatService(fake_llm, memory_service, config_with_openai)
+    config = dataclasses.replace(config_with_openai, db_path=tmp_path / "ctx.db")
+    service = ChatService(fake_llm, memory_service, config)
     result = service._handle_slash_command(f"/context {tmp_path}")
     assert "# Project Context" in result
     assert "completed in" in result

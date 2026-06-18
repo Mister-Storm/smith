@@ -92,7 +92,7 @@ Use this structured ProjectContext as the primary source of truth:
 {context_block}
 
 Health score: {health_score}/100
-Known issues: {', '.join(issues) if issues else 'none'}
+Known issues: {", ".join(issues) if issues else "none"}
 
 Be concise and practical."""
 

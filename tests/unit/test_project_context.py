@@ -31,14 +31,14 @@ def spring_project(tmp_path: Path) -> Path:
     for module in ("api", "domain", "persistence"):
         mod = root / module
         mod.mkdir()
-        (mod / "build.gradle.kts").write_text("plugins { kotlin(\"jvm\") }")
+        (mod / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
 
     api = root / "api" / "src" / "main" / "kotlin" / "com" / "demo"
     api.mkdir(parents=True)
-    (api / "Application.kt").write_text(
-        '@SpringBootApplication\nfun main() { }\n'
+    (api / "Application.kt").write_text("@SpringBootApplication\nfun main() { }\n")
+    (root / "application.yml").write_text(
+        "spring:\n  datasource:\n    url: jdbc:postgresql://localhost/db\n"
     )
-    (root / "application.yml").write_text("spring:\n  datasource:\n    url: jdbc:postgresql://localhost/db\n")
 
     test_dir = root / "api" / "src" / "test" / "kotlin"
     test_dir.mkdir(parents=True)
@@ -122,7 +122,7 @@ def test_build_analysis_json(spring_project: Path):
 def test_project_context_tool(tmp_path: Path):
     proj = tmp_path / "proj"
     proj.mkdir()
-    (proj / "build.gradle.kts").write_text("plugins { kotlin(\"jvm\") }")
+    (proj / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
     (proj / "Main.kt").write_text("fun main() {}\n")
 
     tool = ProjectContextTool()

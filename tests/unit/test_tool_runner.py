@@ -1,3 +1,4 @@
+import dataclasses
 from unittest.mock import MagicMock, patch
 
 from smith.services.tool_runner import run_analyze, run_context, run_duplicates, run_organize
@@ -51,11 +52,11 @@ def test_run_analyze_writes_output(tmp_path, fake_llm):
     assert out.read_text() == result.message
 
 
-def test_run_context(tmp_path, config_with_openai, monkeypatch):
-    monkeypatch.setenv("SMITH_DB_PATH", str(tmp_path / "ctx.db"))
+def test_run_context(tmp_path, config_with_openai):
     (tmp_path / "Main.kt").write_text("fun main() {}")
+    config = dataclasses.replace(config_with_openai, db_path=tmp_path / "ctx.db")
 
-    result = run_context(tmp_path, config=config_with_openai, save=True)
+    result = run_context(tmp_path, config=config, save=True)
 
     assert result.success
     assert "# Project Context" in result.message
@@ -63,7 +64,7 @@ def test_run_context(tmp_path, config_with_openai, monkeypatch):
 
 
 def test_run_analyze_json(tmp_path):
-    (tmp_path / "build.gradle.kts").write_text("plugins { kotlin(\"jvm\") }")
+    (tmp_path / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
     (tmp_path / "Main.kt").write_text("fun main() {}")
 
     result = run_analyze(tmp_path, None, as_json=True)

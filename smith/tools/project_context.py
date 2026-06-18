@@ -361,9 +361,7 @@ def generate_architecture_observations(context: ProjectContext) -> str:
         lines.append("")
         lines.append("The separation between layers appears consistent with common conventions.")
     elif context.architecture_layers:
-        lines.append(
-            f"Architectural layers detected: {', '.join(context.architecture_layers)}."
-        )
+        lines.append(f"Architectural layers detected: {', '.join(context.architecture_layers)}.")
     else:
         lines.append("No explicit architectural layering was detected from directory structure.")
 
@@ -382,9 +380,7 @@ def generate_architecture_observations(context: ProjectContext) -> str:
 
     if context.modules:
         lines.append("")
-        lines.append(
-            f"Module structure includes: {', '.join(context.modules)}."
-        )
+        lines.append(f"Module structure includes: {', '.join(context.modules)}.")
 
     if context.containers and context.ci_cd:
         lines.append("")

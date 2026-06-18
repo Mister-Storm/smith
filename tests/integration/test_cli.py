@@ -75,7 +75,7 @@ def test_analyze_output_file(tmp_path, monkeypatch):
 
 def test_context_command(tmp_path, monkeypatch):
     monkeypatch.setenv("SMITH_DB_PATH", str(tmp_path / "ctx.db"))
-    (tmp_path / "build.gradle.kts").write_text("plugins { kotlin(\"jvm\") }")
+    (tmp_path / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
     (tmp_path / "Main.kt").write_text("fun main() {}")
 
     result = runner.invoke(app, ["context", str(tmp_path)])
@@ -85,7 +85,7 @@ def test_context_command(tmp_path, monkeypatch):
 
 
 def test_analyze_json(tmp_path):
-    (tmp_path / "build.gradle.kts").write_text("plugins { kotlin(\"jvm\") }")
+    (tmp_path / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
     (tmp_path / "Main.kt").write_text("fun main() {}")
 
     result = runner.invoke(app, ["analyze", str(tmp_path), "--json"])
