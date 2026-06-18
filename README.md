@@ -40,7 +40,8 @@ Smith is built for software development, file organization, document analysis, a
 | Feature | Description |
 |---------|-------------|
 | **Chat** | REPL with conversation history stored in SQLite |
-| **Analyze** | Scan Kotlin, Java, and Spring Boot projects; output a markdown architecture report |
+| **Context** | Generate structured project context (languages, frameworks, architecture) |
+| **Analyze** | Analyze projects using ProjectContext; markdown report, health score, JSON output |
 | **Duplicates** | Find duplicate files by SHA-256 hash and report wasted disk space |
 | **Organize** | Sort files into category folders (Documents, Images, Code, etc.) |
 | **Summarize** | Extract and summarize PDF documents with optional study notes |
@@ -89,13 +90,48 @@ smith doctor --test-provider   # optional: test LLM connectivity
 
 ## Usage
 
+### Workstation tools (Sprint 2)
+
+Every tool is available via **CLI commands** and **chat slash commands**. Successful runs display execution timing (e.g. `Analysis completed in 1.2 seconds.`).
+
+```bash
+smith context .
+smith analyze .
+smith analyze . --structure-only          # offline scan, no LLM
+smith analyze . --json                    # JSON health + metadata
+smith summarize article.pdf
+smith summarize article.pdf --pages 10
+smith duplicates ~/Downloads
+smith organize ~/Downloads --dry-run
+smith organize ~/Downloads
+```
+
+```
+/context .
+/analyze .
+/analyze . --structure-only
+/summarize article.pdf
+/summarize article.pdf --study-notes --pages 10
+/duplicates ~/Downloads
+/duplicates ~/Downloads --min-size 1024
+/organize ~/Downloads --dry-run
+/organize ~/Downloads
+```
+
+### All commands
+
 ```bash
 # Interactive chat with slash commands
 smith chat
 
+# Generate project context (deterministic, no LLM)
+smith context ./my-project
+
 # Analyze a project (markdown report)
 smith analyze ./my-project
 smith analyze ./my-project --output report.md
+smith analyze ./my-project --structure-only
+smith analyze ./my-project --json
 
 # Find duplicate files
 smith duplicates ~/Downloads
@@ -108,6 +144,7 @@ smith organize ~/Downloads
 # Summarize a PDF
 smith summarize article.pdf
 smith summarize article.pdf --study-notes
+smith summarize article.pdf --pages 10
 
 # Diagnostics
 smith doctor
@@ -151,12 +188,14 @@ smith_llm_provider = "openai"
 Inside `smith chat`, use slash commands to run tools without leaving the session:
 
 ```
-/duplicates <path>              Find duplicate files
-/organize <path>                Organize files (asks for confirmation)
-/organize --dry-run <path>      Preview organize plan
-/analyze <path>                 Analyze a project
-/summarize <pdf>                Summarize a PDF
-/exit                           Quit
+/context <path>                         Generate project context snapshot
+/duplicates <path> [--min-size N]       Find duplicate files
+/organize <path> [--dry-run]            Organize files (asks for confirmation)
+/analyze <path> [--structure-only]      Analyze a project
+/analyze <path> -o report.md             Save report to file
+/summarize <pdf> [--study-notes]        Summarize a PDF
+/summarize <pdf> --pages N              Summarize first N pages
+/exit                                   Quit
 ```
 
 Free-form messages go to the LLM with conversation context from memory.

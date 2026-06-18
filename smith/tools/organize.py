@@ -1,5 +1,6 @@
 import logging
 import shutil
+from collections import Counter
 from pathlib import Path
 
 from smith.tools.base import Tool, ToolResult
@@ -25,6 +26,8 @@ CATEGORIES: dict[str, set[str]] = {
         ".yml",
     },
 }
+
+CATEGORY_DIR_NAMES = set(CATEGORIES) | {"Misc"}
 
 
 def _categorize(path: Path) -> str:
@@ -58,27 +61,51 @@ class OrganizeDownloadsTool(Tool):
         dry_run = bool(kwargs.get("dry_run", False))
 
         if not directory.is_dir():
-            return ToolResult(success=False, output=f"Not a directory: {directory}")
+            return ToolResult(success=False, message=f"Not a directory: {directory}")
+
+        if directory.name in CATEGORY_DIR_NAMES:
+            return ToolResult(
+                success=True,
+                message=f"Skipping {directory} — already inside a category folder.",
+                metadata={"files_moved": 0, "dry_run": dry_run, "categories": {}},
+            )
 
         files = [p for p in directory.iterdir() if p.is_file() and not p.name.startswith(".")]
 
         if not files:
-            return ToolResult(success=True, output=f"No files to organize in {directory}")
+            return ToolResult(
+                success=True,
+                message=f"No files to organize in {directory}",
+                metadata={"files_moved": 0, "dry_run": dry_run, "categories": {}},
+            )
 
         moves: list[tuple[Path, Path]] = []
+        category_counts: Counter[str] = Counter()
         for file_path in sorted(files):
             category = _categorize(file_path)
             dest_dir = directory / category
             dest = _unique_dest(dest_dir, file_path.name)
             moves.append((file_path, dest))
+            category_counts[category] += 1
 
-        lines = [f"Organize plan for {directory}:", ""]
+        summary_parts = [f"{cat}: {count}" for cat, count in sorted(category_counts.items())]
+        lines = [
+            f"Organize plan for {directory}:",
+            f"Summary: {', '.join(summary_parts)}",
+            "",
+        ]
         for src, dest in moves:
             lines.append(f"  {src.name} -> {dest.relative_to(directory)}")
 
+        metadata = {
+            "files_moved": len(moves) if not dry_run else 0,
+            "dry_run": dry_run,
+            "categories": dict(category_counts),
+        }
+
         if dry_run:
             lines.insert(1, "(dry-run — no files moved)")
-            return ToolResult(success=True, output="\n".join(lines))
+            return ToolResult(success=True, message="\n".join(lines), metadata=metadata)
 
         for src, dest in moves:
             dest.parent.mkdir(parents=True, exist_ok=True)
@@ -87,4 +114,5 @@ class OrganizeDownloadsTool(Tool):
 
         lines.append("")
         lines.append(f"Moved {len(moves)} file(s).")
-        return ToolResult(success=True, output="\n".join(lines))
+        metadata["files_moved"] = len(moves)
+        return ToolResult(success=True, message="\n".join(lines), metadata=metadata)

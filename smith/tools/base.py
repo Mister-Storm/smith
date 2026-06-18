@@ -1,11 +1,16 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 
-@dataclass
+@dataclass(slots=True)
 class ToolResult:
     success: bool
-    output: str
+    message: str
+    output_path: Path | None = None
+    metadata: dict[str, Any] | None = None
+    execution_time_ms: int = 0
 
 
 class Tool(ABC):

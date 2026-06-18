@@ -2,7 +2,8 @@ from pathlib import Path
 
 import typer
 
-from smith.tools.duplicates import FindDuplicateFilesTool
+from smith.cli.render import render_tool_result
+from smith.services.tool_runner import run_duplicates
 
 
 def duplicates(
@@ -11,11 +12,5 @@ def duplicates(
     min_size: int = typer.Option(0, "--min-size", help="Minimum file size in bytes"),
 ) -> None:
     """Find duplicate files in a directory."""
-    tool = FindDuplicateFilesTool()
-    result = tool.execute(path=str(path), min_size=min_size)
-
-    if not result.success:
-        typer.echo(result.output, err=True)
-        raise typer.Exit(code=1)
-
-    typer.echo(result.output)
+    result = run_duplicates(path, min_size=min_size)
+    render_tool_result(result, tool_name="duplicates")

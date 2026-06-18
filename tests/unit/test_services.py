@@ -1,7 +1,7 @@
+import dataclasses
 from unittest.mock import patch
 
 from smith.services.chat import ChatService
-from smith.services.doctor import CheckStatus, format_doctor_report, run_doctor
 
 
 def test_chat_slash_duplicates(tmp_path, fake_llm, memory_service, config_with_openai):
@@ -12,6 +12,7 @@ def test_chat_slash_duplicates(tmp_path, fake_llm, memory_service, config_with_o
     result = service._handle_slash_command(f"/duplicates {tmp_path}")
 
     assert "Group 1" in result
+    assert "completed in" in result
 
 
 def test_chat_slash_unknown(fake_llm, memory_service, config_with_openai):
@@ -25,6 +26,23 @@ def test_chat_slash_organize_dry_run(tmp_path, fake_llm, memory_service, config_
     service = ChatService(fake_llm, memory_service, config_with_openai)
     result = service._handle_slash_command(f"/organize --dry-run {tmp_path}")
     assert "dry-run" in result
+
+
+def test_chat_slash_context(tmp_path, fake_llm, memory_service, config_with_openai):
+    (tmp_path / "Main.kt").write_text("fun main() {}")
+    config = dataclasses.replace(config_with_openai, db_path=tmp_path / "ctx.db")
+    service = ChatService(fake_llm, memory_service, config)
+    result = service._handle_slash_command(f"/context {tmp_path}")
+    assert "# Project Context" in result
+    assert "completed in" in result
+
+
+def test_chat_slash_analyze_structure_only(tmp_path, fake_llm, memory_service, config_with_openai):
+    (tmp_path / "Main.kt").write_text("fun main() {}")
+    service = ChatService(fake_llm, memory_service, config_with_openai)
+    result = service._handle_slash_command(f"/analyze {tmp_path} --structure-only")
+    assert "# Project Context" in result
+    assert len(fake_llm.calls) == 0
 
 
 def test_chat_normal_message(fake_llm, memory_service, config_with_openai):
@@ -44,6 +62,8 @@ def test_doctor_healthy(monkeypatch, tmp_path):
     monkeypatch.setenv("SMITH_CONFIG_PATH", str(tmp_path / "missing.toml"))
     monkeypatch.setenv("SMITH_HOME", str(tmp_path / "smith_home"))
 
+    from smith.services.doctor import format_doctor_report, run_doctor
+
     report = run_doctor(test_provider=False)
     assert report.exit_code in (0, 1)
     text = format_doctor_report(report)
@@ -56,6 +76,8 @@ def test_doctor_no_provider(monkeypatch, tmp_path):
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
     monkeypatch.setenv("SMITH_DB_PATH", str(tmp_path / "mem.db"))
 
+    from smith.services.doctor import run_doctor
+
     report = run_doctor(test_provider=False)
     assert report.exit_code == 2
 
@@ -64,6 +86,8 @@ def test_doctor_connectivity_mock(monkeypatch, tmp_path, fake_llm):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     monkeypatch.setenv("SMITH_DB_PATH", str(tmp_path / "mem.db"))
     monkeypatch.setenv("SMITH_HOME", str(tmp_path / "smith_home"))
+
+    from smith.services.doctor import CheckStatus, run_doctor
 
     with patch("smith.services.doctor.get_llm_provider", return_value=fake_llm):
         report = run_doctor(test_provider=True)
@@ -77,6 +101,8 @@ def test_doctor_connectivity_failure(monkeypatch, tmp_path):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     monkeypatch.setenv("SMITH_DB_PATH", str(tmp_path / "mem.db"))
     monkeypatch.setenv("SMITH_HOME", str(tmp_path / "smith_home"))
+
+    from smith.services.doctor import CheckStatus, run_doctor
 
     class FailingLLM:
         name = "Fake"

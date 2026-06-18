@@ -1,6 +1,6 @@
 import typer
 
-from smith.cli.commands import analyze, chat, doctor, duplicates, organize, summarize
+from smith.cli.commands import analyze, chat, context, doctor, duplicates, organize, summarize
 from smith.core.logging import setup_logging
 
 app = typer.Typer(
@@ -24,6 +24,7 @@ def main(
 
 
 app.command()(chat.chat)
+app.command()(context.context)
 app.command()(analyze.analyze)
 app.command()(duplicates.duplicates)
 app.command()(organize.organize)

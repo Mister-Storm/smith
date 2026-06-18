@@ -47,23 +47,33 @@ class Config:
     config_file_loaded: bool = False
 
     @classmethod
-    def load(cls) -> "Config":
+    def load(cls, *, load_env: bool = True) -> "Config":
         config_path = get_config_file_path()
         file_data = _load_config_file(config_path)
         config_file_loaded = config_path.is_file()
 
-        load_dotenv()
-        if config_path.parent.exists():
-            env_in_smith = config_path.parent / ".env"
-            if env_in_smith.is_file():
-                load_dotenv(env_in_smith)
+        if load_env and not os.environ.get("SMITH_SKIP_DOTENV"):
+            load_dotenv()
+            if config_path.parent.exists():
+                env_in_smith = config_path.parent / ".env"
+                if env_in_smith.is_file():
+                    load_dotenv(env_in_smith)
+
+        toml_keys = {
+            "OPENAI_API_KEY": "openai_api_key",
+            "DEEPSEEK_API_KEY": "deepseek_api_key",
+            "SMITH_LLM_PROVIDER": "smith_llm_provider",
+            "OPENAI_MODEL": "openai_model",
+            "DEEPSEEK_MODEL": "deepseek_model",
+            "SMITH_DB_PATH": "db_path",
+        }
 
         def _get(key: str, default: str = "") -> str:
             env_val = os.environ.get(key, "").strip()
             if env_val:
                 return env_val
-            file_key = key.lower()
-            file_val = file_data.get(file_key) or file_data.get(key)
+            toml_key = toml_keys.get(key, key.lower())
+            file_val = file_data.get(toml_key) or file_data.get(key.lower()) or file_data.get(key)
             if file_val is not None:
                 return str(file_val).strip()
             return default
