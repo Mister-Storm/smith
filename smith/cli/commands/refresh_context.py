@@ -4,25 +4,25 @@ import typer
 
 from smith.cli.console import get_console, print_footer
 from smith.core.formatting import format_result_footer
-from smith.services.project_context import render_context_tables
-from smith.services.tool_runner import run_context
+from smith.services.project_context import ProjectContextService, render_context_tables
+from smith.services.tool_runner import run_refresh_context
 
 
-def context(
+def refresh_context(
     ctx: typer.Context,
-    path: Path = typer.Argument(..., help="Project directory to inspect"),
+    path: Path = typer.Argument(..., help="Project directory to re-analyze"),
     output: Path | None = typer.Option(None, "--output", "-o", help="Export context as JSON"),
     debug: bool = typer.Option(False, "--debug", help="Show detection trace for troubleshooting"),
 ) -> None:
-    """Inspect a project and save workspace context to .smith/project_context.json.
+    """Force a full re-analysis and overwrite stored project context.
 
     Examples:
 
-        smith context .
-        smith context . --output context.json
-        smith context . --debug
+        smith refresh-context .
+        smith refresh-context . --output context.json
+        smith refresh-context . --debug
     """
-    result = run_context(path, save=True, debug=debug)
+    result = run_refresh_context(path, debug=debug)
     if not result.success:
         typer.echo(result.message, err=True)
         raise typer.Exit(code=1)
@@ -37,4 +37,6 @@ def context(
         output.write_text(context_data.to_json(), encoding="utf-8")
         console.print(f"\nExported to {output}")
 
+    stored = ProjectContextService.context_path(path)
+    console.print(f"\nStored at {stored}")
     print_footer(format_result_footer("context", max(result.execution_time_ms, 0)))

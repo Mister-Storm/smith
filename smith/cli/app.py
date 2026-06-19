@@ -6,7 +6,9 @@ from smith.cli.commands import (
     context,
     doctor,
     duplicates,
+    health,
     organize,
+    refresh_context,
     setup,
     summarize,
     version,
@@ -44,11 +46,13 @@ app.command()(setup.setup)
 app.command()(version.version)
 app.command(name="help")(help_cmd.help_cmd)
 app.command()(context.context)
+app.command(name="refresh-context")(refresh_context.refresh_context)
 app.command()(analyze.analyze)
 app.command()(duplicates.duplicates)
 app.command()(organize.organize)
 app.command()(summarize.summarize)
 app.command()(doctor.doctor)
+app.command()(health.health)
 
 if __name__ == "__main__":
     app()

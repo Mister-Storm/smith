@@ -3,14 +3,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from smith.memory.db import get_connection
-from smith.tools.project_context import ProjectContext
+from smith.tools.project_context import AnalysisProjectContext
 
 
 class ProjectContextStore:
     def __init__(self, db_path: Path | str) -> None:
         self._conn = get_connection(db_path)
 
-    def save(self, context: ProjectContext) -> None:
+    def save(self, context: AnalysisProjectContext) -> None:
         self._conn.execute(
             """
             INSERT INTO project_contexts (project_path, generated_at, context_json)
@@ -24,7 +24,7 @@ class ProjectContextStore:
         )
         self._conn.commit()
 
-    def get_latest(self, project_path: str | Path) -> ProjectContext | None:
+    def get_latest(self, project_path: str | Path) -> AnalysisProjectContext | None:
         resolved = str(Path(project_path).expanduser().resolve())
         row = self._conn.execute(
             """
@@ -37,7 +37,7 @@ class ProjectContextStore:
         ).fetchone()
         if not row:
             return None
-        return ProjectContext.from_dict(json.loads(row["context_json"]))
+        return AnalysisProjectContext.from_dict(json.loads(row["context_json"]))
 
     def count(self) -> int:
         row = self._conn.execute("SELECT COUNT(*) AS cnt FROM project_contexts").fetchone()

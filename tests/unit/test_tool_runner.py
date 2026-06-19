@@ -1,7 +1,13 @@
-import dataclasses
 from unittest.mock import MagicMock, patch
 
-from smith.services.tool_runner import run_analyze, run_context, run_duplicates, run_organize
+from smith.services.tool_runner import (
+    run_analyze,
+    run_context,
+    run_duplicates,
+    run_organize,
+    run_refresh_context,
+    run_workstation_health,
+)
 
 
 def test_run_duplicates_success(tmp_path):
@@ -52,15 +58,28 @@ def test_run_analyze_writes_output(tmp_path, fake_llm):
     assert out.read_text() == result.message
 
 
-def test_run_context(tmp_path, config_with_openai):
-    (tmp_path / "Main.kt").write_text("fun main() {}")
-    config = dataclasses.replace(config_with_openai, db_path=tmp_path / "ctx.db")
+def test_run_context(tmp_path):
+    project = tmp_path / "proj"
+    project.mkdir()
+    (project / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
+    (project / "Main.kt").write_text("fun main() {}")
 
-    result = run_context(tmp_path, config=config, save=True)
+    result = run_context(project, save=True)
 
     assert result.success
-    assert "# Project Context" in result.message
-    assert result.metadata["health_score"] >= 0
+    assert "Project: proj" in result.message
+    assert (project / ".smith" / "project_context.json").is_file()
+
+
+def test_run_refresh_context(tmp_path):
+    project = tmp_path / "proj"
+    project.mkdir()
+    (project / "Main.kt").write_text("fun main() {}")
+
+    result = run_refresh_context(project)
+
+    assert result.success
+    assert (project / ".smith" / "project_context.json").is_file()
 
 
 def test_run_analyze_json(tmp_path):
@@ -81,3 +100,16 @@ def test_run_organize_dry_run(tmp_path):
     assert result.success
     assert result.metadata["dry_run"] is True
     assert "dry-run" in result.message
+
+
+def test_run_workstation_health(tmp_path):
+    root = tmp_path / "downloads"
+    root.mkdir()
+    for i in range(55):
+        (root / f"f{i}.txt").write_text("x")
+
+    result = run_workstation_health(paths=[str(root)], max_depth=2, max_files=500)
+
+    assert result.success
+    assert "score" in result.metadata
+    assert result.metadata["score"] <= 100

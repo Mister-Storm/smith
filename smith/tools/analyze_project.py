@@ -5,7 +5,7 @@ from pathlib import Path
 from smith.llm.base import LLMProvider
 from smith.tools.base import Tool, ToolResult
 from smith.tools.project_context import (
-    ProjectContext,
+    AnalysisProjectContext,
     build_analysis_json,
     compute_health_score,
     context_to_markdown,
@@ -16,7 +16,7 @@ from smith.tools.project_context import (
 logger = logging.getLogger(__name__)
 
 
-def _format_context_header(context: ProjectContext) -> str:
+def _format_context_header(context: AnalysisProjectContext) -> str:
     return "\n".join(
         [
             "---",

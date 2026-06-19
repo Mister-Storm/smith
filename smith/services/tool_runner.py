@@ -4,15 +4,14 @@ import time
 from pathlib import Path
 from typing import Any
 
-from smith.core.config import Config
 from smith.llm.base import LLMProvider
-from smith.memory.project_contexts import ProjectContextStore
 from smith.tools.analyze_project import AnalyzeProjectTool
 from smith.tools.base import Tool, ToolResult
 from smith.tools.duplicates import FindDuplicateFilesTool
 from smith.tools.organize import OrganizeDownloadsTool
 from smith.tools.project_context import ProjectContextTool
 from smith.tools.summarize_pdf import SummarizePdfTool
+from smith.tools.workstation_health import WorkstationHealthTool
 
 logger = logging.getLogger(__name__)
 
@@ -61,20 +60,17 @@ def run_analyze(
 def run_context(
     path: str | Path,
     *,
-    config: Config | None = None,
     save: bool = True,
+    debug: bool = False,
 ) -> ToolResult:
-    store = None
-    if save and config:
-        store = ProjectContextStore(config.db_path)
     tool = ProjectContextTool()
-    kwargs: dict[str, Any] = {"path": str(path), "save": save}
-    if store:
-        kwargs["store"] = store
-    result = _run_tool(tool, **kwargs)
-    if store:
-        store.close()
+    result = _run_tool(tool, path=str(path), save=save, refresh=False, debug=debug)
     return result
+
+
+def run_refresh_context(path: str | Path, *, debug: bool = False) -> ToolResult:
+    tool = ProjectContextTool()
+    return _run_tool(tool, path=str(path), save=True, refresh=True, debug=debug)
 
 
 def run_summarize(
@@ -99,3 +95,24 @@ def run_duplicates(path: str | Path, *, min_size: int = 0) -> ToolResult:
 def run_organize(path: str | Path, *, dry_run: bool = False) -> ToolResult:
     tool = OrganizeDownloadsTool()
     return _run_tool(tool, path=str(path), dry_run=dry_run)
+
+
+def run_workstation_health(
+    *,
+    paths: list[str] | None = None,
+    stale_days: int = 90,
+    min_size_mb: int = 50,
+    max_depth: int = 4,
+    max_files: int = 5000,
+    as_json: bool = False,
+) -> ToolResult:
+    tool = WorkstationHealthTool()
+    return _run_tool(
+        tool,
+        paths=paths,
+        stale_days=stale_days,
+        min_size_mb=min_size_mb,
+        max_depth=max_depth,
+        max_files=max_files,
+        as_json=as_json,
+    )

@@ -31,6 +31,29 @@ def test_organize_dry_run(tmp_path):
     assert "dry-run" in result.output
 
 
+def test_health_command(tmp_path):
+    root = tmp_path / "downloads"
+    root.mkdir()
+    for i in range(55):
+        (root / f"file_{i}.txt").write_text("data")
+
+    result = runner.invoke(app, ["health", "--paths", str(root)])
+    assert result.exit_code in (0, 1)
+    assert "Workstation Health" in result.output
+    assert "Score:" in result.output
+    assert "did not modify" in result.output.lower() or "Score:" in result.output
+
+
+def test_health_json(tmp_path):
+    root = tmp_path / "scan"
+    root.mkdir()
+    (root / "a.txt").write_text("hello")
+
+    result = runner.invoke(app, ["health", "--paths", str(root), "--json"])
+    assert result.exit_code in (0, 1)
+    assert "score" in result.output
+
+
 def test_analyze_command(tmp_path, monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     (tmp_path / "Main.kt").write_text("fun main(){}")
@@ -74,15 +97,27 @@ def test_analyze_output_file(tmp_path, monkeypatch):
     assert "Java" in content
 
 
-def test_context_command(tmp_path, monkeypatch):
-    monkeypatch.setenv("SMITH_DB_PATH", str(tmp_path / "ctx.db"))
-    (tmp_path / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
-    (tmp_path / "Main.kt").write_text("fun main() {}")
+def test_context_command(tmp_path):
+    project = tmp_path / "proj"
+    project.mkdir()
+    (project / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
+    (project / "Main.kt").write_text("fun main() {}")
 
-    result = runner.invoke(app, ["context", str(tmp_path)])
+    result = runner.invoke(app, ["context", str(project)])
     assert result.exit_code == 0
-    assert "Project Context" in result.output
-    assert "✓ Context completed" in result.output
+    assert "Project: proj" in result.output
+    assert (project / ".smith" / "project_context.json").is_file()
+
+
+def test_refresh_context_command(tmp_path):
+    project = tmp_path / "proj"
+    project.mkdir()
+    (project / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
+    (project / "Main.kt").write_text("fun main() {}")
+
+    result = runner.invoke(app, ["refresh-context", str(project)])
+    assert result.exit_code == 0
+    assert "Project: proj" in result.output
 
 
 def test_analyze_json(tmp_path):

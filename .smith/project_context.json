@@ -1,0 +1,13 @@
+{
+  "project_name": "smith",
+  "language": "python",
+  "framework": null,
+  "build_system": "hatch",
+  "database": [],
+  "infrastructure": [],
+  "ci_cd": [
+    "github-actions"
+  ],
+  "modules": [],
+  "generated_at": "2026-06-18T23:06:25Z"
+}

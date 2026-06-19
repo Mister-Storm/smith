@@ -3,6 +3,14 @@ import logging
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+from smith.services.context_detection import (
+    BUILD_DISPLAY,
+    CI_DISPLAY,
+    DATABASE_DISPLAY,
+    INFRA_DISPLAY,
+    LANGUAGE_DISPLAY,
+    detect_project_context,
+)
 from smith.tools.base import Tool, ToolResult
 from smith.tools.fs_utils import should_skip_path
 
@@ -28,30 +36,9 @@ LAYER_NAMES = {
     "common",
 }
 
-DATABASE_MARKERS = {
-    "postgresql": "PostgreSQL",
-    "postgres": "PostgreSQL",
-    "mysql": "MySQL",
-    "mariadb": "MariaDB",
-    "h2": "H2",
-    "mongodb": "MongoDB",
-    "redis": "Redis",
-    "sqlite": "SQLite",
-    "flyway": "Flyway",
-    "liquibase": "Liquibase",
-}
-
-CI_MARKERS = {
-    ".github/workflows": "GitHub Actions",
-    ".gitlab-ci.yml": "GitLab CI",
-    "Jenkinsfile": "Jenkins",
-    "azure-pipelines.yml": "Azure Pipelines",
-    ".circleci": "CircleCI",
-}
-
 
 @dataclass(slots=True)
-class ProjectContext:
+class AnalysisProjectContext:
     language: str | None
     frameworks: list[str]
     build_system: str | None
@@ -71,7 +58,7 @@ class ProjectContext:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ProjectContext":
+    def from_dict(cls, data: dict) -> "AnalysisProjectContext":
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
@@ -82,112 +69,10 @@ def _read_text(path: Path) -> str:
         return ""
 
 
-def _detect_languages(path: Path) -> list[str]:
-    counts: dict[str, int] = {}
-    ext_map = {".kt": "Kotlin", ".java": "Java", ".py": "Python", ".go": "Go", ".rs": "Rust"}
-    for file_path in path.rglob("*"):
-        if not file_path.is_file() or should_skip_path(file_path, path):
-            continue
-        lang = ext_map.get(file_path.suffix.lower())
-        if lang:
-            counts[lang] = counts.get(lang, 0) + 1
-    return [lang for lang, _ in sorted(counts.items(), key=lambda x: -x[1])]
-
-
-def _detect_build_system(path: Path) -> str | None:
-    if (path / "build.gradle.kts").is_file():
-        return "Gradle Kotlin DSL"
-    if (path / "pom.xml").is_file():
-        return "Maven"
-    if (path / "build.gradle").is_file():
-        return "Gradle"
-    if (path / "pyproject.toml").is_file() or (path / "setup.py").is_file():
-        return "Python (pyproject/setup)"
-    return None
-
-
-def _detect_frameworks(path: Path) -> list[str]:
-    frameworks: set[str] = set()
-    for file_path in path.rglob("*"):
-        if not file_path.is_file() or should_skip_path(file_path, path):
-            continue
-        if file_path.suffix not in (".gradle", ".kts", ".xml", ".java", ".kt", ".py"):
-            if file_path.name not in ("pom.xml", "build.gradle", "build.gradle.kts"):
-                continue
-        content = _read_text(file_path)
-        if "spring-boot-starter" in content or "@SpringBootApplication" in content:
-            frameworks.add("Spring Boot")
-        if "quarkus" in content.lower():
-            frameworks.add("Quarkus")
-        if "micronaut" in content.lower():
-            frameworks.add("Micronaut")
-        if "django" in content.lower():
-            frameworks.add("Django")
-        if "fastapi" in content.lower():
-            frameworks.add("FastAPI")
-    return sorted(frameworks)
-
-
-def _detect_databases(path: Path) -> list[str]:
-    found: set[str] = set()
-    for file_path in path.rglob("*"):
-        if not file_path.is_file() or should_skip_path(file_path, path):
-            continue
-        if file_path.suffix not in (
-            ".gradle",
-            ".kts",
-            ".xml",
-            ".yml",
-            ".yaml",
-            ".properties",
-            ".env",
-            ".java",
-            ".kt",
-        ):
-            continue
-        content = _read_text(file_path).lower()
-        for marker, name in DATABASE_MARKERS.items():
-            if marker in content:
-                found.add(name)
-    return sorted(found)
-
-
-def _detect_containers(path: Path) -> list[str]:
-    containers: set[str] = set()
-    for name in ("Dockerfile", "docker-compose.yml", "docker-compose.yaml", "compose.yml"):
-        if (path / name).is_file() or any(
-            p.name == name for p in path.rglob(name) if not should_skip_path(p, path)
-        ):
-            containers.add("Docker")
-            break
-    if (path / "kubernetes").is_dir() or any(
-        p.name.endswith((".yaml", ".yml"))
-        and "kind:" in _read_text(p)
-        and not should_skip_path(p, path)
-        for p in path.rglob("*.yml")
-    ):
-        containers.add("Kubernetes")
-    return sorted(containers)
-
-
-def _detect_ci_cd(path: Path) -> list[str]:
-    found: set[str] = set()
-    for marker, name in CI_MARKERS.items():
-        target = path / marker
-        if target.exists():
-            found.add(name)
-    return sorted(found)
-
-
-def _detect_modules(path: Path) -> list[str]:
-    modules: set[str] = set()
-    for build_file in ("build.gradle.kts", "build.gradle", "pom.xml"):
-        for bf in path.rglob(build_file):
-            if should_skip_path(bf, path):
-                continue
-            if bf.parent != path:
-                modules.add(bf.parent.name)
-    return sorted(modules)
+def _slug_to_display(slug: str | None, mapping: dict[str, str]) -> str | None:
+    if not slug:
+        return None
+    return mapping.get(slug, slug.replace("-", " ").title())
 
 
 def _detect_entry_points(path: Path) -> list[str]:
@@ -224,7 +109,7 @@ def _detect_layers(path: Path) -> list[str]:
     return sorted(layers)
 
 
-def _detect_patterns(context: ProjectContext) -> list[str]:
+def _detect_patterns(context: AnalysisProjectContext) -> list[str]:
     patterns: list[str] = []
     layers = set(context.architecture_layers)
     if {"api", "service", "repository"}.issubset(layers) or {
@@ -280,20 +165,22 @@ def _detect_large_files(path: Path, line_threshold: int = 400) -> list[str]:
     return large[:5]
 
 
-def generate_project_context(project_path: Path) -> ProjectContext:
+def generate_project_context(project_path: Path) -> AnalysisProjectContext:
     path = project_path.expanduser().resolve()
-    languages = _detect_languages(path)
-    build_system = _detect_build_system(path)
+    detected, _trace = detect_project_context(path)
+
+    language = _slug_to_display(detected.language, LANGUAGE_DISPLAY)
+    build_system = _slug_to_display(detected.build_system, BUILD_DISPLAY)
     has_build = build_system is not None
 
-    context = ProjectContext(
-        language=languages[0] if languages else None,
-        frameworks=_detect_frameworks(path),
+    context = AnalysisProjectContext(
+        language=language,
+        frameworks=detected.frameworks,
         build_system=build_system,
-        databases=_detect_databases(path),
-        containers=_detect_containers(path),
-        ci_cd=_detect_ci_cd(path),
-        modules=_detect_modules(path),
+        databases=[DATABASE_DISPLAY.get(d, d) for d in detected.databases],
+        containers=[INFRA_DISPLAY.get(i, i) for i in detected.infrastructure],
+        ci_cd=[CI_DISPLAY.get(c, c) for c in detected.ci_cd],
+        modules=detected.modules,
         entry_points=_detect_entry_points(path),
         architecture_layers=_detect_layers(path),
         detected_patterns=[],
@@ -306,7 +193,7 @@ def generate_project_context(project_path: Path) -> ProjectContext:
     return context
 
 
-def compute_health_score(context: ProjectContext) -> tuple[int, list[str]]:
+def compute_health_score(context: AnalysisProjectContext) -> tuple[int, list[str]]:
     score = 50
     issues: list[str] = []
 
@@ -352,7 +239,7 @@ def compute_health_score(context: ProjectContext) -> tuple[int, list[str]]:
     return max(0, min(100, score)), issues
 
 
-def generate_architecture_observations(context: ProjectContext) -> str:
+def generate_architecture_observations(context: AnalysisProjectContext) -> str:
     lines = ["## Architecture Observations", ""]
 
     if "Layered Architecture" in context.detected_patterns:
@@ -391,7 +278,7 @@ def generate_architecture_observations(context: ProjectContext) -> str:
     return "\n".join(lines)
 
 
-def context_to_markdown(context: ProjectContext) -> str:
+def context_to_markdown(context: AnalysisProjectContext) -> str:
     def section(title: str, items: list[str] | None, single: str | None = None) -> str:
         if single:
             body = single
@@ -425,7 +312,9 @@ def context_to_markdown(context: ProjectContext) -> str:
     return "\n".join(parts)
 
 
-def build_analysis_json(context: ProjectContext, health_score: int, issues: list[str]) -> dict:
+def build_analysis_json(
+    context: AnalysisProjectContext, health_score: int, issues: list[str]
+) -> dict:
     return {
         "health_score": health_score,
         "language": (context.language or "unknown").lower(),
@@ -446,30 +335,51 @@ class ProjectContextTool(Tool):
     description = "Generate structured project context snapshot"
 
     def execute(self, **kwargs) -> ToolResult:
+        from smith.services.project_context import (
+            ProjectContextService,
+            format_context_text,
+            render_detection_debug,
+        )
+
         project_path = Path(kwargs["path"]).expanduser().resolve()
         save = bool(kwargs.get("save", True))
+        refresh = bool(kwargs.get("refresh", False))
+        debug = bool(kwargs.get("debug", False))
 
         if not project_path.is_dir():
             return ToolResult(success=False, message=f"Not a directory: {project_path}")
 
-        context = generate_project_context(project_path)
-        health_score, issues = compute_health_score(context)
-        markdown = context_to_markdown(context)
-        health_section = f"\n## Project Health\n\nScore: {health_score}/100\n"
-        message = markdown + health_section
+        service = ProjectContextService()
+        trace = None
+        try:
+            if refresh:
+                context, trace = service.refresh(project_path, debug=debug)
+            else:
+                context, trace = service.build(project_path, debug=debug)
+                if save:
+                    service.save(project_path, context)
+        except NotADirectoryError as exc:
+            return ToolResult(success=False, message=str(exc))
 
-        metadata = {
-            "health_score": health_score,
-            "issues": issues,
+        message = format_context_text(context)
+        metadata: dict = {
             "context": context.to_dict(),
+            "context_path": str(service.context_path(project_path)),
         }
+        if debug and trace is not None:
+            metadata["detection_trace"] = {
+                "detections": trace.detections,
+                "ignored": trace.ignored,
+            }
 
-        if save and kwargs.get("store"):
-            kwargs["store"].save(context)
+        logger.info("Tool context path=%s project=%s", project_path, context.project_name)
+        result = ToolResult(success=True, message=message, metadata=metadata)
+        if debug and trace is not None:
+            from smith.cli.console import get_console
 
-        logger.info("Tool context path=%s score=%d", project_path, health_score)
-        return ToolResult(success=True, message=message, metadata=metadata)
+            render_detection_debug(trace, get_console())
+        return result
 
 
-def context_to_json(context: ProjectContext, health_score: int, issues: list[str]) -> str:
+def context_to_json(context: AnalysisProjectContext, health_score: int, issues: list[str]) -> str:
     return json.dumps(build_analysis_json(context, health_score, issues), indent=2)

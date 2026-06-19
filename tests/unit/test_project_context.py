@@ -6,6 +6,7 @@ import pytest
 from smith.memory.project_contexts import ProjectContextStore
 from smith.tools.analyze_project import AnalyzeProjectTool
 from smith.tools.project_context import (
+    AnalysisProjectContext,
     ProjectContextTool,
     build_analysis_json,
     compute_health_score,
@@ -55,7 +56,7 @@ def test_generate_project_context_spring(spring_project: Path):
 
     assert context.language == "Kotlin"
     assert "Spring Boot" in context.frameworks
-    assert context.build_system == "Gradle Kotlin DSL"
+    assert context.build_system == "Gradle"
     assert "PostgreSQL" in context.databases
     assert "Docker" in context.containers
     assert "GitHub Actions" in context.ci_cd
@@ -119,19 +120,13 @@ def test_build_analysis_json(spring_project: Path):
     assert isinstance(payload["issues"], list)
 
 
-def test_project_context_tool(tmp_path: Path):
-    proj = tmp_path / "proj"
-    proj.mkdir()
-    (proj / "build.gradle.kts").write_text('plugins { kotlin("jvm") }')
-    (proj / "Main.kt").write_text("fun main() {}\n")
-
+def test_project_context_tool(spring_project: Path):
     tool = ProjectContextTool()
-    result = tool.execute(path=str(proj), save=False)
+    result = tool.execute(path=str(spring_project), save=False)
 
     assert result.success
-    assert "# Project Context" in result.message
-    assert "## Project Health" in result.message
-    assert result.metadata["health_score"] >= 0
+    assert "Project: demo" in result.message
+    assert result.metadata["context"]["language"] == "kotlin"
 
 
 def test_project_context_persistence(spring_project: Path, tmp_path: Path):
@@ -184,9 +179,7 @@ def test_analyze_with_llm(spring_project: Path, fake_llm):
 
 
 def test_context_roundtrip_dict():
-    from smith.tools.project_context import ProjectContext
-
-    original = ProjectContext(
+    original = AnalysisProjectContext(
         language="Python",
         frameworks=["FastAPI"],
         build_system="Python (pyproject/setup)",
@@ -201,6 +194,6 @@ def test_context_roundtrip_dict():
         has_tests=True,
         has_build_file=True,
     )
-    restored = ProjectContext.from_dict(original.to_dict())
+    restored = AnalysisProjectContext.from_dict(original.to_dict())
     assert restored.language == original.language
     assert restored.frameworks == original.frameworks
