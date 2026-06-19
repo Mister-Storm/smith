@@ -11,6 +11,7 @@ from smith.tools.duplicates import FindDuplicateFilesTool
 from smith.tools.organize import OrganizeDownloadsTool
 from smith.tools.project_context import ProjectContextTool
 from smith.tools.summarize_pdf import SummarizePdfTool
+from smith.tools.workstation_health import WorkstationHealthTool
 
 logger = logging.getLogger(__name__)
 
@@ -94,3 +95,24 @@ def run_duplicates(path: str | Path, *, min_size: int = 0) -> ToolResult:
 def run_organize(path: str | Path, *, dry_run: bool = False) -> ToolResult:
     tool = OrganizeDownloadsTool()
     return _run_tool(tool, path=str(path), dry_run=dry_run)
+
+
+def run_workstation_health(
+    *,
+    paths: list[str] | None = None,
+    stale_days: int = 90,
+    min_size_mb: int = 50,
+    max_depth: int = 4,
+    max_files: int = 5000,
+    as_json: bool = False,
+) -> ToolResult:
+    tool = WorkstationHealthTool()
+    return _run_tool(
+        tool,
+        paths=paths,
+        stale_days=stale_days,
+        min_size_mb=min_size_mb,
+        max_depth=max_depth,
+        max_files=max_files,
+        as_json=as_json,
+    )

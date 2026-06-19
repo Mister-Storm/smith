@@ -52,6 +52,7 @@ def render_slash_commands_table() -> None:
         ("/organize <path>", "Organize files (asks for confirmation)"),
         ("/analyze <path>", "Analyze a project"),
         ("/summarize <pdf>", "Summarize a PDF"),
+        ("/health [path]", "Workstation hygiene scan (read-only)"),
         ("/exit", "Quit chat session"),
     ]
     for cmd, desc in commands:

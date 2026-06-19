@@ -6,6 +6,7 @@ _TOOL_LABELS = {
     "summarize": "Summarization",
     "duplicates": "Duplicate scan",
     "organize": "Organization",
+    "health": "Workstation health scan",
 }
 
 _NEXT_ACTIONS = {
@@ -14,6 +15,7 @@ _NEXT_ACTIONS = {
     "duplicates": "smith organize ~/Downloads --dry-run",
     "organize": "smith doctor",
     "summarize": "smith chat",
+    "health": "smith duplicates ~/Downloads",
 }
 
 

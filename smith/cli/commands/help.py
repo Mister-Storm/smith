@@ -13,6 +13,7 @@ _COMMANDS = [
     ("summarize", "Summarize a PDF document"),
     ("duplicates", "Find duplicate files by hash"),
     ("organize", "Organize files into category folders"),
+    ("health", "Workstation hygiene scan (read-only recommendations)"),
     ("doctor", "Run installation diagnostics"),
 ]
 
@@ -29,6 +30,8 @@ _EXAMPLES = [
     ("Summarize", "smith summarize document.pdf --pages 10"),
     ("Duplicates", "smith duplicates ~/Downloads"),
     ("Organize", "smith organize ~/Downloads --dry-run"),
+    ("Health", "smith health"),
+    ("Health JSON", "smith health --json"),
 ]
 
 

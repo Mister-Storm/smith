@@ -6,6 +6,7 @@ from smith.services.tool_runner import (
     run_duplicates,
     run_organize,
     run_refresh_context,
+    run_workstation_health,
 )
 
 
@@ -99,3 +100,16 @@ def test_run_organize_dry_run(tmp_path):
     assert result.success
     assert result.metadata["dry_run"] is True
     assert "dry-run" in result.message
+
+
+def test_run_workstation_health(tmp_path):
+    root = tmp_path / "downloads"
+    root.mkdir()
+    for i in range(55):
+        (root / f"f{i}.txt").write_text("x")
+
+    result = run_workstation_health(paths=[str(root)], max_depth=2, max_files=500)
+
+    assert result.success
+    assert "score" in result.metadata
+    assert result.metadata["score"] <= 100

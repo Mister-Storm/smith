@@ -31,6 +31,29 @@ def test_organize_dry_run(tmp_path):
     assert "dry-run" in result.output
 
 
+def test_health_command(tmp_path):
+    root = tmp_path / "downloads"
+    root.mkdir()
+    for i in range(55):
+        (root / f"file_{i}.txt").write_text("data")
+
+    result = runner.invoke(app, ["health", "--paths", str(root)])
+    assert result.exit_code in (0, 1)
+    assert "Workstation Health" in result.output
+    assert "Score:" in result.output
+    assert "did not modify" in result.output.lower() or "Score:" in result.output
+
+
+def test_health_json(tmp_path):
+    root = tmp_path / "scan"
+    root.mkdir()
+    (root / "a.txt").write_text("hello")
+
+    result = runner.invoke(app, ["health", "--paths", str(root), "--json"])
+    assert result.exit_code in (0, 1)
+    assert "score" in result.output
+
+
 def test_analyze_command(tmp_path, monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     (tmp_path / "Main.kt").write_text("fun main(){}")

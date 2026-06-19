@@ -90,6 +90,7 @@ smith setup
 | PDF Summarization | ✅ |
 | Duplicate Detection | ✅ |
 | Downloads Organization | ✅ |
+| Workstation Health | ✅ |
 | Local Memory | ✅ |
 | Setup Wizard | ✅ |
 | Rich Terminal UI | ✅ |
@@ -162,6 +163,27 @@ smith context . --debug          # show detection trace (troubleshooting)
 **What it detects:** language, framework, build system, databases, infrastructure, CI/CD, and modules — all via deterministic file inspection (no LLM tokens).
 
 **Chat integration:** When you run `smith chat` inside a project, Smith loads `.smith/project_context.json` and injects a compact context block into the system prompt (max 500 characters). Use `/context` to view loaded context and `/refresh-context` to rebuild it.
+
+---
+
+## Workstation Health
+
+Smith can scan your workstation for hygiene issues and produce **read-only recommendations** — it never modifies or deletes files.
+
+```bash
+smith health                              # scan Downloads, Desktop, Documents
+smith health --paths ~/Downloads          # scan specific directories
+smith health --json                       # machine-readable report
+```
+
+| Command | Checks |
+|---------|--------|
+| `smith doctor` | Smith installation (Python, API keys, memory DB) |
+| `smith health` | Workstation hygiene (clutter, caches, manifests, disk) |
+
+**Chat:** `/health [path]` runs the same scan inside chat.
+
+Correlated findings (e.g. low disk + large caches) are grouped into actionable insights with safe next steps like `smith organize --dry-run` or `smith duplicates`.
 
 ---
 

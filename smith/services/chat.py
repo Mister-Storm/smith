@@ -17,6 +17,7 @@ from smith.services.tool_runner import (
     run_organize,
     run_refresh_context,
     run_summarize,
+    run_workstation_health,
 )
 from smith.tools.base import ToolResult
 
@@ -182,6 +183,8 @@ class ChatService:
                 provider=self._provider,
                 model=self._model,
             )
+        if command == "/health":
+            return _format_tool_response(self._cmd_health(args), "health")
 
         return f"Unknown command: {command}. Type /exit to quit."
 
@@ -266,3 +269,8 @@ class ChatService:
                 message="Usage: /summarize <pdf> [--study-notes] [--pages N]",
             )
         return run_summarize(args[0], self._llm, study_notes=study_notes, pages=pages)
+
+    def _cmd_health(self, args: list[str]) -> ToolResult:
+        if not args:
+            return run_workstation_health()
+        return run_workstation_health(paths=[args[0]])
