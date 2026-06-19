@@ -28,11 +28,7 @@ class WorkstationHealthTool(Tool):
             max_files=int(kwargs.get("max_files", 5000)),
         )
 
-        message = (
-            json.dumps(report.to_dict(), indent=2)
-            if as_json
-            else report_to_markdown(report)
-        )
+        message = json.dumps(report.to_dict(), indent=2) if as_json else report_to_markdown(report)
 
         metadata = {
             "score": report.score,

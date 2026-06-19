@@ -19,9 +19,7 @@ from smith.tools.fs_utils import format_bytes, should_skip_path
 
 logger = logging.getLogger(__name__)
 
-SAFETY_FOOTER = (
-    "Smith did not modify any files. Review recommendations before taking action."
-)
+SAFETY_FOOTER = "Smith did not modify any files. Review recommendations before taking action."
 
 CACHE_DIR_NAMES = {
     "node_modules",
@@ -276,9 +274,7 @@ def scan_cache(roots: list[Path], *, max_depth: int) -> list[RawFinding]:
             continue
 
         severity = CheckStatus.WARN if cache_bytes > 1024**3 else CheckStatus.WARN
-        node_modules_bytes = sum(
-            size for name, size in cache_dirs if "node_modules" in name
-        )
+        node_modules_bytes = sum(size for name, size in cache_dirs if "node_modules" in name)
         lines = [f"Total cache: {format_bytes(cache_bytes)}"]
         for name, size in sorted(cache_dirs, key=lambda x: -x[1])[:5]:
             lines.append(f"  {name}: {format_bytes(size)}")
@@ -406,9 +402,7 @@ def scan_naming(roots: list[Path]) -> list[RawFinding]:
         mixed = sum([has_space, has_dash, has_underscore]) >= 2
 
         junk_count = sum(
-            1
-            for p in root.rglob("*")
-            if p.is_file() and p.name in (".DS_Store", "Thumbs.db")
+            1 for p in root.rglob("*") if p.is_file() and p.name in (".DS_Store", "Thumbs.db")
         )
 
         if not mixed and junk_count <= 3:
@@ -536,8 +530,8 @@ def scan_manifests(
                             stripped = line.strip().strip('",')
                             if stripped and not stripped.startswith("#") and stripped[0].isalpha():
                                 if "dependencies" not in stripped and not _has_version_pin(
-                                stripped
-                            ):
+                                    stripped
+                                ):
                                     if re.match(r"^[a-zA-Z0-9_-]+$", stripped.split("[")[0]):
                                         issues.append(f"Possibly unpinned: {stripped}")
 
@@ -598,9 +592,7 @@ def run_all_scanners(
         findings.extend(scan_duplicates_hint(path))
     findings.extend(scan_cache(paths, max_depth=max_depth))
     findings.extend(
-        scan_large_files(
-            paths, min_size_mb=min_size_mb, max_depth=max_depth, max_files=max_files
-        )
+        scan_large_files(paths, min_size_mb=min_size_mb, max_depth=max_depth, max_files=max_files)
     )
     findings.extend(scan_logs(paths, max_depth=max_depth))
     findings.extend(scan_naming(paths))

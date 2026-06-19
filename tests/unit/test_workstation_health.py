@@ -167,9 +167,9 @@ def test_score_recommendation_alignment():
     assert aligned
     major = {k for k, v in breakdown.items() if abs(v) >= 5}
     for cat in major:
-        has_rec = any(
-            cat in ("disk", "cache") and r.category == "system" for r in aligned
-        ) or any(r.impact_reason for r in aligned)
+        has_rec = any(cat in ("disk", "cache") and r.category == "system" for r in aligned) or any(
+            r.impact_reason for r in aligned
+        )
         assert has_rec
 
 
@@ -368,4 +368,3 @@ def test_align_injects_fallback_recommendation():
     recs = build_recommendations_v2([large], [], breakdown)
     aligned = align_score_and_recommendations(score, breakdown, recs, [large], [])
     assert any("large" in r.title.lower() or "Review" in r.title for r in aligned)
-
