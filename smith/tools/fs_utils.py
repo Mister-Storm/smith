@@ -23,6 +23,24 @@ SKIP_CONTEXT_DIRS = SKIP_DIR_NAMES | {
 
 SKIP_CONTEXT_TEST_SEGMENTS = {"test", "tests"}
 
+WORKSPACE_SKIP_DIR_NAMES = {
+    ".smith",
+    "node_modules",
+    "target",
+    "build",
+    "dist",
+    "__pycache__",
+    "coverage",
+    "htmlcov",
+}
+
+
+def should_skip_workspace_dir(name: str) -> bool:
+    if name in WORKSPACE_SKIP_DIR_NAMES:
+        return True
+    return name.startswith(".") and name not in (".", "..")
+
+
 TRUSTED_DEPENDENCY_FILES = {
     "pyproject.toml",
     "requirements.txt",

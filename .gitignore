@@ -39,3 +39,4 @@ Thumbs.db
 
 # Smith runtime data
 *.db
+.smith/

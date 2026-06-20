@@ -187,6 +187,10 @@ def render_slash_commands_table() -> None:
         ("/commit-message", "Conventional Commit suggestions"),
         ("/release-notes", "Release notes from recent commits"),
         ("/git-health", "Compact repository health overview"),
+        ("/workspace [path]", "Multi-project workspace overview"),
+        ("/workspace-health [path]", "Workspace health across projects"),
+        ("/workspace-context [path]", "Display cached workspace context"),
+        ("/refresh-workspace-context [path]", "Cache workspace context"),
         ("/exit", "Quit chat session"),
     ]
 

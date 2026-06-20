@@ -14,6 +14,7 @@ from smith.cli.commands import (
     setup,
     summarize,
     version,
+    workspace,
 )
 from smith.cli.commands import (
     help as help_cmd,
@@ -57,6 +58,10 @@ app.command()(summarize.summarize)
 app.command()(doctor.doctor)
 app.command()(health.health)
 app.add_typer(git.git_app, name="git")
+app.command()(workspace.workspace)
+app.command(name="workspace-health")(workspace.workspace_health)
+app.command(name="refresh-workspace-context")(workspace.refresh_workspace_context)
+app.command(name="workspace-context")(workspace.workspace_context)
 
 if __name__ == "__main__":
     app()

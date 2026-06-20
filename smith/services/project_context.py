@@ -55,6 +55,18 @@ def _display_ci(slug: str) -> str:
     return CI_DISPLAY.get(slug, slug.replace("-", " ").title())
 
 
+def display_language(slug: str | None) -> str:
+    return _display_language(slug)
+
+
+def display_framework(slug: str | None) -> str:
+    return _display_framework(slug)
+
+
+def display_build(slug: str | None) -> str:
+    return _display_build(slug)
+
+
 class ProjectContextService:
     @staticmethod
     def context_path(project_root: Path) -> Path:
@@ -91,9 +103,12 @@ class ProjectContextService:
             return None
 
     def save(self, path: Path, context: ProjectContext) -> Path:
+        from smith.services.gitignore import ensure_smith_gitignore_entry
+
         context_file = self.context_path(path)
         context_file.parent.mkdir(parents=True, exist_ok=True)
         context_file.write_text(context.to_json(), encoding="utf-8")
+        ensure_smith_gitignore_entry(path)
         logger.info("Saved project context to %s", context_file)
         return context_file
 
