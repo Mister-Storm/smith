@@ -27,6 +27,21 @@ def test_config_save_no_secrets(tmp_path, monkeypatch):
     assert "OPENAI_API_KEY" not in content
 
 
+def test_setup_wizard_saves_deepseek_model(tmp_path, monkeypatch):
+    monkeypatch.setenv("SMITH_CONFIG_PATH", str(tmp_path / "config.toml"))
+    monkeypatch.setenv("SMITH_HOME", str(tmp_path))
+    monkeypatch.setenv("SMITH_DB_PATH", str(tmp_path / "memory.db"))
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    prompts = iter(["deepseek", "2"])
+    monkeypatch.setattr("smith.services.setup_wizard.typer.prompt", lambda *a, **k: next(prompts))
+    monkeypatch.setattr("smith.services.setup_wizard.typer.echo", lambda *a, **k: None)
+
+    run_setup_wizard(configure_key=False)
+
+    saved = (tmp_path / "config.toml").read_text()
+    assert 'deepseek_model = "deepseek-v4-pro"' in saved
+
+
 def test_setup_wizard_saves_config(tmp_path, monkeypatch):
     monkeypatch.setenv("SMITH_CONFIG_PATH", str(tmp_path / "config.toml"))
     monkeypatch.setenv("SMITH_HOME", str(tmp_path))
