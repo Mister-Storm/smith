@@ -3,7 +3,15 @@ from pathlib import Path
 
 import typer
 
-from smith.core.config import Config, get_smith_home, resolve_provider
+from smith.core.config import (
+    DEFAULT_DEEPSEEK_MODEL,
+    Config,
+    format_deepseek_model_menu,
+    get_smith_home,
+    normalize_deepseek_model,
+    resolve_deepseek_model_choice,
+    resolve_provider,
+)
 from smith.memory.db import get_connection
 
 
@@ -48,6 +56,17 @@ def _init_memory_db(db_path: Path) -> None:
     conn.close()
 
 
+def _prompt_deepseek_model(current: str | None = None) -> str:
+    typer.echo(f"\n{format_deepseek_model_menu()}")
+    default = normalize_deepseek_model(current or DEFAULT_DEEPSEEK_MODEL)
+    default_choice = "1" if default == DEFAULT_DEEPSEEK_MODEL else "2"
+    choice = typer.prompt(
+        "Select model (1/2, flash/pro, or full id)",
+        default=default_choice,
+    )
+    return resolve_deepseek_model_choice(choice)
+
+
 def run_setup_wizard(*, configure_key: bool = True) -> Config:
     """Interactive setup. Saves non-secret config to TOML; keys go to env.sh only."""
     typer.echo("Welcome to Smith setup.\n")
@@ -58,6 +77,9 @@ def run_setup_wizard(*, configure_key: bool = True) -> Config:
 
     config = Config.load()
     config.llm_provider = provider
+
+    if provider == "deepseek":
+        config.deepseek_model = _prompt_deepseek_model(config.deepseek_model)
 
     if configure_key:
         env_var = _env_key_for_provider(provider)

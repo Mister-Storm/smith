@@ -7,6 +7,7 @@ from smith.cli.commands import (
     doctor,
     duplicates,
     health,
+    model,
     organize,
     refresh_context,
     setup,
@@ -43,6 +44,7 @@ def main(
 
 app.command()(chat.chat)
 app.command()(setup.setup)
+app.command()(model.model)
 app.command()(version.version)
 app.command(name="help")(help_cmd.help_cmd)
 app.command()(context.context)

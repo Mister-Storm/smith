@@ -36,6 +36,9 @@ smith = "smith.cli.app:app"
 [tool.hatch.build.targets.wheel]
 packages = ["smith"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"smith/assets/logo.png" = "smith/assets/logo.png"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v"

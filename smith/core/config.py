@@ -9,6 +9,59 @@ from smith.core.exceptions import ConfigurationError
 
 MIN_PYTHON_VERSION = (3, 12)
 
+DEEPSEEK_V4_FLASH = "deepseek-v4-flash"
+DEEPSEEK_V4_PRO = "deepseek-v4-pro"
+DEFAULT_DEEPSEEK_MODEL = DEEPSEEK_V4_FLASH
+
+DEEPSEEK_MODEL_OPTIONS: dict[str, str] = {
+    DEEPSEEK_V4_FLASH: "DeepSeek-V4-Flash — fast and economical",
+    DEEPSEEK_V4_PRO: "DeepSeek-V4-Pro — highest quality",
+}
+
+_LEGACY_DEEPSEEK_MODELS = {
+    "deepseek-chat": DEEPSEEK_V4_FLASH,
+    "deepseek-reasoner": DEEPSEEK_V4_FLASH,
+}
+
+_DEEPSEEK_MODEL_ALIASES = {
+    "v4-flash": DEEPSEEK_V4_FLASH,
+    "flash": DEEPSEEK_V4_FLASH,
+    "v4-pro": DEEPSEEK_V4_PRO,
+    "pro": DEEPSEEK_V4_PRO,
+}
+
+
+def normalize_deepseek_model(model: str) -> str:
+    """Map legacy or shorthand DeepSeek model names to canonical V4 ids."""
+    normalized = model.strip().lower()
+    if normalized in DEEPSEEK_MODEL_OPTIONS:
+        return normalized
+    if normalized in _LEGACY_DEEPSEEK_MODELS:
+        return _LEGACY_DEEPSEEK_MODELS[normalized]
+    if normalized in _DEEPSEEK_MODEL_ALIASES:
+        return _DEEPSEEK_MODEL_ALIASES[normalized]
+    return normalized
+
+
+def resolve_deepseek_model_choice(choice: str) -> str:
+    """Parse interactive or CLI input into a supported DeepSeek V4 model id."""
+    normalized = normalize_deepseek_model(choice)
+    if normalized in DEEPSEEK_MODEL_OPTIONS:
+        return normalized
+    if choice.strip() == "1":
+        return DEEPSEEK_V4_FLASH
+    if choice.strip() == "2":
+        return DEEPSEEK_V4_PRO
+    valid = ", ".join(DEEPSEEK_MODEL_OPTIONS)
+    raise ConfigurationError(f"Unknown DeepSeek model '{choice}'. Choose one of: {valid}")
+
+
+def format_deepseek_model_menu() -> str:
+    lines = ["DeepSeek V4 models:"]
+    for index, (model_id, label) in enumerate(DEEPSEEK_MODEL_OPTIONS.items(), start=1):
+        lines.append(f"  {index}. {model_id} — {label}")
+    return "\n".join(lines)
+
 
 def get_smith_home() -> Path:
     env_path = os.environ.get("SMITH_HOME")
@@ -42,7 +95,7 @@ class Config:
     llm_provider: str = ""
     db_path: Path = field(default_factory=lambda: Path("~/.smith/memory.db").expanduser())
     openai_model: str = "gpt-4o-mini"
-    deepseek_model: str = "deepseek-chat"
+    deepseek_model: str = DEFAULT_DEEPSEEK_MODEL
     config_file_path: Path = field(default_factory=get_config_file_path)
     config_file_loaded: bool = False
 
@@ -86,7 +139,7 @@ class Config:
             llm_provider=_get("SMITH_LLM_PROVIDER").lower(),
             db_path=db_path,
             openai_model=_get("OPENAI_MODEL", "gpt-4o-mini"),
-            deepseek_model=_get("DEEPSEEK_MODEL", "deepseek-chat"),
+            deepseek_model=normalize_deepseek_model(_get("DEEPSEEK_MODEL", DEFAULT_DEEPSEEK_MODEL)),
             config_file_path=config_path,
             config_file_loaded=config_file_loaded,
         )
@@ -158,7 +211,7 @@ def get_active_model(config: Config) -> str | None:
         return None
     if provider == "openai":
         return config.openai_model
-    return config.deepseek_model
+    return normalize_deepseek_model(config.deepseek_model)
 
 
 def needs_setup(config: Config) -> bool:

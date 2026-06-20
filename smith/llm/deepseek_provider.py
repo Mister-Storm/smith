@@ -3,7 +3,7 @@ import time
 
 from openai import OpenAI
 
-from smith.core.config import Config
+from smith.core.config import Config, normalize_deepseek_model
 from smith.llm.base import LLMProvider
 
 logger = logging.getLogger(__name__)
@@ -31,15 +31,16 @@ class DeepSeekProvider(LLMProvider):
 
         start = time.perf_counter()
         response = self._client.chat.completions.create(
-            model=self._config.deepseek_model,
+            model=normalize_deepseek_model(self._config.deepseek_model),
             messages=messages,
         )
         elapsed = time.perf_counter() - start
         content = response.choices[0].message.content or ""
+        model = normalize_deepseek_model(self._config.deepseek_model)
         logger.info(
             "LLM call provider=%s model=%s prompt_len=%d response_len=%d duration_ms=%.0f",
             self.name,
-            self._config.deepseek_model,
+            model,
             len(prompt),
             len(content),
             elapsed * 1000,

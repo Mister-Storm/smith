@@ -32,6 +32,18 @@ def test_deepseek_provider_generate(config_with_deepseek):
     result = provider.generate("test prompt")
     assert result == "deep result"
     assert provider.name == "DeepSeek"
+    kwargs = client.chat.completions.create.call_args.kwargs
+    assert kwargs["model"] == "deepseek-v4-flash"
+
+
+def test_deepseek_provider_normalizes_legacy_model(config_with_deepseek):
+    config_with_deepseek.deepseek_model = "deepseek-chat"
+    client = MagicMock()
+    client.chat.completions.create.return_value = _mock_completion("ok")
+    provider = DeepSeekProvider(config_with_deepseek, client=client)
+    provider.generate("test")
+    kwargs = client.chat.completions.create.call_args.kwargs
+    assert kwargs["model"] == "deepseek-v4-flash"
 
 
 def test_factory_openai(config_with_openai):

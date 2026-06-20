@@ -213,7 +213,7 @@ API keys **never** go in `config.toml`. Use `smith setup` or `source ~/.smith/en
 | `OPENAI_API_KEY` / `DEEPSEEK_API_KEY` | LLM credentials (required) |
 | `SMITH_LLM_PROVIDER` | Force `openai` or `deepseek` |
 | `SMITH_DB_PATH` | SQLite memory path (default `~/.smith/memory.db`) |
-| `OPENAI_MODEL` / `DEEPSEEK_MODEL` | Model names |
+| `OPENAI_MODEL` / `DEEPSEEK_MODEL` | Model names (`deepseek-v4-flash` or `deepseek-v4-pro`) |
 
 <details>
 <summary>Example config.toml (non-secret settings only)</summary>
@@ -221,7 +221,7 @@ API keys **never** go in `config.toml`. Use `smith setup` or `source ~/.smith/en
 ```toml
 smith_llm_provider = "openai"
 openai_model = "gpt-4o-mini"
-deepseek_model = "deepseek-chat"
+deepseek_model = "deepseek-v4-flash"
 db_path = "~/.smith/memory.db"
 ```
 

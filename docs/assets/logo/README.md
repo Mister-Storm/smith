@@ -7,6 +7,7 @@ Official visual identity files for Smith.
 | File | Purpose |
 |------|---------|
 | `smith.png` | Primary logo (hero, README) |
+| `../smith/assets/logo.png` | Bundled CLI asset (optimized copy) |
 
 ## Planned variants
 

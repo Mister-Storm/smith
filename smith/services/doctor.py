@@ -10,6 +10,7 @@ from smith.core.config import (
     MIN_PYTHON_VERSION,
     Config,
     describe_provider_selection,
+    get_active_model,
     get_smith_home,
     is_key_set,
     resolve_provider,
@@ -108,8 +109,10 @@ def _check_providers(config: Config) -> tuple[CheckResult, CheckResult]:
     ]
 
     provider_name, reason = describe_provider_selection(config)
+    active_model = get_active_model(config) or "—"
     resolution_lines = [
         f"Active Provider: {provider_name}",
+        f"Active Model: {active_model}",
         f"Reason: {reason}",
     ]
 

@@ -6,6 +6,7 @@ from smith.cli.console import get_console, print_markdown
 _COMMANDS = [
     ("chat", "Interactive chat session with slash commands"),
     ("setup", "Configure provider, API keys, and memory"),
+    ("model", "Choose DeepSeek V4 model (Flash or Pro)"),
     ("version", "Show version, provider, and model"),
     ("context", "Inspect project and save .smith/project_context.json"),
     ("refresh-context", "Force re-analysis and overwrite project context"),
@@ -20,6 +21,7 @@ _COMMANDS = [
 _EXAMPLES = [
     ("Install", "pipx install smith-ai"),
     ("Setup", "smith setup"),
+    ("DeepSeek model", "smith model flash"),
     ("Verify", "smith doctor"),
     ("Chat", "smith chat"),
     ("Version", "smith version"),
