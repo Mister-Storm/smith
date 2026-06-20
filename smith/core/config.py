@@ -139,9 +139,7 @@ class Config:
             llm_provider=_get("SMITH_LLM_PROVIDER").lower(),
             db_path=db_path,
             openai_model=_get("OPENAI_MODEL", "gpt-4o-mini"),
-            deepseek_model=normalize_deepseek_model(
-                _get("DEEPSEEK_MODEL", DEFAULT_DEEPSEEK_MODEL)
-            ),
+            deepseek_model=normalize_deepseek_model(_get("DEEPSEEK_MODEL", DEFAULT_DEEPSEEK_MODEL)),
             config_file_path=config_path,
             config_file_loaded=config_file_loaded,
         )
