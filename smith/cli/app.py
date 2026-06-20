@@ -6,6 +6,7 @@ from smith.cli.commands import (
     context,
     doctor,
     duplicates,
+    git,
     health,
     model,
     organize,
@@ -55,6 +56,7 @@ app.command()(organize.organize)
 app.command()(summarize.summarize)
 app.command()(doctor.doctor)
 app.command()(health.health)
+app.add_typer(git.git_app, name="git")
 
 if __name__ == "__main__":
     app()

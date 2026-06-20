@@ -38,4 +38,7 @@ def test_slash_commands_table(capture_console):
     assert "/context" in output
     assert "/analyze" in output
     assert "/health" in output
+    assert "/git-summary" in output
+    assert "/git-health" in output
+    assert "/commit-message" in output
     assert "Commands" in output

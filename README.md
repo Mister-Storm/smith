@@ -185,6 +185,42 @@ smith health --json                       # machine-readable report
 
 Correlated findings (e.g. low disk + large caches) are grouped into actionable insights with safe next steps like `smith organize --dry-run` or `smith duplicates`.
 
+When run inside a Git repository, `smith health` also includes an informational **Git Health** section (branch, modified/untracked counts, development assessment). This does not affect the health score.
+
+---
+
+## Git Intelligence
+
+Smith understands your repository state — what changed, what you are working on, and how to communicate those changes. **All Git Intelligence commands are strictly read-only.** Smith never creates commits, pushes, pulls, rebases, or modifies your repository.
+
+```bash
+smith git summary              # status, top areas, suggested commit
+smith git changes              # human-readable explanation of changes
+smith git commit-message       # up to 3 Conventional Commit suggestions
+smith git release-notes        # release notes from last 20 commits
+smith git health               # compact repository health overview
+```
+
+| Command | Purpose |
+|---------|---------|
+| `smith git summary` | Branch, file counts, top changed areas, assessment, suggested commit |
+| `smith git changes` | List changed files and heuristic summary |
+| `smith git commit-message` | Conventional Commit suggestions (`feat`, `fix`, `refactor`, etc.) |
+| `smith git release-notes` | Grouped release notes (Features, Bug Fixes, Documentation, Testing, Maintenance) |
+| `smith git health` | Repository overview — foundation for future `smith status` dashboard (Sprint 6) |
+
+**Development assessment** (informational only):
+
+| Assessment | Meaning |
+|------------|---------|
+| Clean | No modified, untracked, or staged files |
+| Ready for Commit | Staged changes present, few unstaged modifications |
+| Work in Progress | Many unstaged or untracked changes |
+
+Smith-generated artifacts under `.smith/` are automatically ignored when analyzing changes, even if not in `.gitignore`.
+
+**Chat:** `/git-summary`, `/git-changes`, `/commit-message`, `/release-notes`, `/git-health`
+
 ---
 
 ## Philosophy

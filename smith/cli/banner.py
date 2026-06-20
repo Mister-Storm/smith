@@ -182,6 +182,11 @@ def render_slash_commands_table() -> None:
         ("/analyze <path>", "Analyze a project"),
         ("/summarize <pdf>", "Summarize a PDF"),
         ("/health [path]", "Workstation hygiene scan (read-only)"),
+        ("/git-summary", "Repository status and suggested commit"),
+        ("/git-changes", "Explain current changes"),
+        ("/commit-message", "Conventional Commit suggestions"),
+        ("/release-notes", "Release notes from recent commits"),
+        ("/git-health", "Compact repository health overview"),
         ("/exit", "Quit chat session"),
     ]
 
