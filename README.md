@@ -224,6 +224,30 @@ Smith-generated artifacts under `.smith/` are automatically ignored when analyzi
 
 ---
 
+## Workspace Intelligence
+
+Smith can discover multiple projects under a directory, aggregate per-project context and git activity, and cache a workspace summary for chat.
+
+```bash
+smith workspace [path]                    # live multi-project overview
+smith workspace-health [path]             # README / CI / tests / stale counts
+smith refresh-workspace-context [path]    # write .smith/workspace_context.json
+smith workspace-context [path]            # show cached workspace summary
+```
+
+| Command | Purpose |
+|---------|---------|
+| `smith workspace` | Discover projects (`.git`, `pyproject.toml`, `package.json`, etc.), rank by activity, show languages and frameworks |
+| `smith workspace-health` | Informational counts — missing README, CI, tests, stale repos |
+| `smith refresh-workspace-context` | Build summary, save cache (`schema_version: 1`), ensure `.smith/` in `.gitignore` |
+| `smith workspace-context` | Load cached summary from `.smith/workspace_context.json` |
+
+Discovery scans up to **3 levels deep** by default (`--max-depth`), skips common vendor/build dirs, and stops after **100 projects** with a warning. A directory with one project still works but shows guidance to run `smith context`.
+
+**Chat:** `/workspace`, `/workspace-health`, `/workspace-context`, `/refresh-workspace-context`
+
+---
+
 ## Philosophy
 
 Smith is built on a few simple ideas:
@@ -273,6 +297,8 @@ db_path = "~/.smith/memory.db"
 - Chat with slash commands and SQLite memory
 - Analyze Project (health score, JSON output, architecture observations)
 - Project Context (`smith context`)
+- Git Intelligence (read-only repository awareness)
+- Workspace Intelligence (multi-project discovery and cached context)
 - Summarize PDF
 - Duplicate Detection
 - Organize Downloads

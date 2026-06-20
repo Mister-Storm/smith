@@ -21,6 +21,10 @@ _COMMANDS = [
     ("git commit-message", "Conventional Commit message suggestions"),
     ("git release-notes", "Release notes from recent commits"),
     ("git health", "Compact repository health overview"),
+    ("workspace", "Multi-project workspace overview"),
+    ("workspace-health", "Workspace health across projects"),
+    ("refresh-workspace-context", "Cache workspace context to .smith/"),
+    ("workspace-context", "Display cached workspace context"),
 ]
 
 _EXAMPLES = [
@@ -44,6 +48,10 @@ _EXAMPLES = [
     ("Git Health", "smith git health"),
     ("Commit Message", "smith git commit-message"),
     ("Release Notes", "smith git release-notes"),
+    ("Workspace", "smith workspace ~/development"),
+    ("Workspace Health", "smith workspace-health ~/development"),
+    ("Refresh Workspace", "smith refresh-workspace-context ~/development"),
+    ("Workspace Context", "smith workspace-context"),
 ]
 
 

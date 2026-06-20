@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Workspace Intelligence** (multi-project aggregation):
+  - CLI: `smith workspace`, `workspace-health`, `refresh-workspace-context`, `workspace-context`
+  - Chat: `/workspace`, `/workspace-health`, `/workspace-context`, `/refresh-workspace-context`
+  - `WorkspaceIntelligenceService` with project discovery, activity ranking, health checks, and cached `.smith/workspace_context.json` (`schema_version: 1`)
+  - Models: `WorkspaceProject`, `WorkspaceSummary`, `WorkspaceHealth`
+  - `.smith/` gitignore helper applied on project and workspace context save (never creates `.gitignore`)
+  - `GitIntelligenceService.get_last_commit_date()` and safe try_* helpers for aggregation
+  - Unit and integration tests for discovery, validation, gitignore, CLI, and chat commands
+
 ## [0.1.0] - 2026-06-20
 
 ### Added

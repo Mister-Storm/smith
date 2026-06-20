@@ -12,3 +12,7 @@ class ToolExecutionError(SmithError):
 
 class GitNotRepositoryError(SmithError):
     """Raised when the current directory is not a Git repository."""
+
+
+class WorkspaceNoProjectsError(SmithError):
+    """Raised when workspace discovery finds no projects."""

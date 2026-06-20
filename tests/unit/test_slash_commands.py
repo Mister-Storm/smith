@@ -14,6 +14,10 @@ EXPECTED_COMMANDS = {
     "/commit-message",
     "/release-notes",
     "/git-health",
+    "/workspace",
+    "/workspace-health",
+    "/workspace-context",
+    "/refresh-workspace-context",
 }
 
 

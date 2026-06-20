@@ -3,9 +3,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from smith.core.exceptions import GitNotRepositoryError
+from smith.core.exceptions import GitNotRepositoryError, WorkspaceNoProjectsError
 from smith.core.formatting import format_result_footer
 from smith.services.git_intelligence import (
     GitIntelligenceService,
@@ -14,6 +15,11 @@ from smith.services.git_intelligence import (
     format_git_health,
     format_git_summary,
     format_release_notes,
+)
+from smith.services.workspace_intelligence import (
+    WorkspaceIntelligenceService,
+    format_workspace_health,
+    format_workspace_summary,
 )
 from smith.tools.base import ToolResult
 
@@ -133,6 +139,52 @@ def _handle_git_health(service: ChatService, args: list[str]) -> ToolResult:
     return _git_tool_result(service, lambda git: format_git_health(git.get_git_health()))
 
 
+def _workspace_root(service: ChatService, args: list[str]) -> Path:
+    if args:
+        return Path(args[0]).expanduser().resolve()
+    return service._workspace
+
+
+def _handle_workspace(service: ChatService, args: list[str]) -> ToolResult:
+    try:
+        wis = WorkspaceIntelligenceService(_workspace_root(service, args))
+        summary = wis.build_workspace_summary()
+        return ToolResult(success=True, message=format_workspace_summary(summary))
+    except WorkspaceNoProjectsError as exc:
+        return ToolResult(success=False, message=str(exc))
+
+
+def _handle_workspace_health(service: ChatService, args: list[str]) -> ToolResult:
+    try:
+        wis = WorkspaceIntelligenceService(_workspace_root(service, args))
+        health = wis.build_workspace_health()
+        return ToolResult(success=True, message=format_workspace_health(health))
+    except WorkspaceNoProjectsError as exc:
+        return ToolResult(success=False, message=str(exc))
+
+
+def _handle_workspace_context(service: ChatService, args: list[str]) -> ToolResult:
+    wis = WorkspaceIntelligenceService(_workspace_root(service, args))
+    summary = wis.load_workspace_context()
+    if summary is None:
+        return ToolResult(
+            success=False,
+            message="No workspace context found. Run `/refresh-workspace-context` first.",
+        )
+    return ToolResult(success=True, message=format_workspace_summary(summary))
+
+
+def _handle_refresh_workspace_context(service: ChatService, args: list[str]) -> ToolResult:
+    try:
+        wis = WorkspaceIntelligenceService(_workspace_root(service, args))
+        summary = wis.build_workspace_summary()
+        stored = wis.save_workspace_context(summary)
+        message = format_workspace_summary(summary) + f"\n\nStored at {stored}"
+        return ToolResult(success=True, message=message)
+    except WorkspaceNoProjectsError as exc:
+        return ToolResult(success=False, message=str(exc))
+
+
 def build_slash_command_registry() -> dict[str, SlashCommandSpec]:
     return {
         "/context": SlashCommandSpec("/context", _handle_context, SlashResponseMode.TEXT),
@@ -156,6 +208,12 @@ def build_slash_command_registry() -> dict[str, SlashCommandSpec]:
         "/commit-message": SlashCommandSpec("/commit-message", _handle_commit_message),
         "/release-notes": SlashCommandSpec("/release-notes", _handle_release_notes),
         "/git-health": SlashCommandSpec("/git-health", _handle_git_health),
+        "/workspace": SlashCommandSpec("/workspace", _handle_workspace),
+        "/workspace-health": SlashCommandSpec("/workspace-health", _handle_workspace_health),
+        "/workspace-context": SlashCommandSpec("/workspace-context", _handle_workspace_context),
+        "/refresh-workspace-context": SlashCommandSpec(
+            "/refresh-workspace-context", _handle_refresh_workspace_context
+        ),
     }
 
 

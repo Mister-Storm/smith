@@ -18,9 +18,9 @@ from smith.models.git_intelligence import (
     RepositoryStatus,
 )
 
-# TODO(Sprint 6): Unified Status Dashboard — `smith status` will aggregate
-# Project Context, Git Health (via get_git_health()), Workstation Health,
-# Provider, and Memory.
+# TODO(Sprint 7): Unified Status Dashboard — `smith status` will aggregate
+# Workspace Summary, Project Context, Git Health (via get_git_health()),
+# Workstation Health, Provider, and Memory.
 
 _CONVENTIONAL_COMMIT_RE = re.compile(
     r"^(?P<type>\w+)(?:\((?P<scope>[^)]+)\))?(?P<breaking>!)?:\s*(?P<subject>.+)$"
@@ -230,6 +230,12 @@ class GitIntelligenceService:
             assessment=assessment,
         )
 
+    def get_last_commit_date(self) -> str | None:
+        result = self._git(["log", "-1", "--format=%cI"])
+        if result.returncode != 0 or not result.stdout.strip():
+            return None
+        return result.stdout.strip()
+
     def get_git_health(self) -> GitHealthReport:
         status = self.get_repository_status()
         paths = self._changed_file_paths()
@@ -292,6 +298,30 @@ class GitIntelligenceService:
         if result.returncode == 0:
             subjects = [s.strip() for s in result.stdout.splitlines() if s.strip()]
         return _bucket_release_notes(subjects)
+
+
+def try_git_repo_root(cwd: Path) -> Path | None:
+    result = _run_git(["rev-parse", "--show-toplevel"], cwd=cwd.resolve())
+    if result.returncode != 0:
+        return None
+    return Path(result.stdout.strip()).resolve()
+
+
+def try_get_last_commit_date(cwd: Path) -> str | None:
+    root = try_git_repo_root(cwd)
+    if root is None:
+        return None
+    result = _run_git(["log", "-1", "--format=%cI"], cwd=root)
+    if result.returncode != 0 or not result.stdout.strip():
+        return None
+    return result.stdout.strip()
+
+
+def try_get_repository_status(cwd: Path) -> RepositoryStatus | None:
+    try:
+        return GitIntelligenceService(cwd=cwd).get_repository_status()
+    except GitNotRepositoryError:
+        return None
 
 
 def _build_summary_lines(paths: list[str], areas: list[str]) -> list[str]:
