@@ -66,8 +66,7 @@ def _is_smith_internal(path: str) -> bool:
     if normalized == ".smith" or normalized.startswith(".smith/"):
         return True
     return any(
-        normalized.startswith(p) or normalized == p.rstrip("/")
-        for p in _SMITH_INTERNAL_PREFIXES
+        normalized.startswith(p) or normalized == p.rstrip("/") for p in _SMITH_INTERNAL_PREFIXES
     )
 
 
@@ -412,9 +411,7 @@ def _build_commit_suggestions(paths: list[str], untracked: set[str]) -> list[Com
             break
         msg = f"{alt_type}({alt_scope}): {description}"
         if not any(s.message == msg for s in suggestions):
-            suggestions.append(
-                CommitSuggestion(message=msg, type=alt_type, scope=alt_scope)
-            )
+            suggestions.append(CommitSuggestion(message=msg, type=alt_type, scope=alt_scope))
 
     return suggestions[:3]
 

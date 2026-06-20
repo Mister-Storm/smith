@@ -23,6 +23,7 @@
   <a href="#features">Features</a> ·
   <a href="#usage">Usage</a> ·
   <a href="#roadmap">Roadmap</a> ·
+  <a href="CHANGELOG.md">Changelog</a> ·
   <a href="#contributing">Contributing</a>
 </p>
 
@@ -328,8 +329,11 @@ Contributions welcome — bugs, ideas, and pull requests.
 
 1. Fork the repo
 2. Create a branch
-3. Run lint and tests
-4. Open a PR with a clear description
+3. Add a bullet under `[Unreleased]` in [CHANGELOG.md](CHANGELOG.md) (`Added`, `Changed`, `Fixed`, etc.). One line per user-visible change; link PR numbers when helpful.
+4. Run lint and tests
+5. Open a PR with a clear description
+
+When releasing a new version, rename the `[Unreleased]` section to `[X.Y.Z] - YYYY-MM-DD`, bump the version in `pyproject.toml`, and add a fresh `[Unreleased]` section at the top.
 
 ---
 
