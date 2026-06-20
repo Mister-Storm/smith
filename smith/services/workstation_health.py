@@ -7,6 +7,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
+from smith.core.exceptions import GitNotRepositoryError
 from smith.models.workstation_health import (
     ConsolidatedFinding,
     CorrelationInsight,
@@ -15,6 +16,7 @@ from smith.models.workstation_health import (
     WorkstationHealthReport,
 )
 from smith.services.doctor import CheckResult, CheckStatus
+from smith.services.git_intelligence import GitIntelligenceService
 from smith.tools.fs_utils import format_bytes, should_skip_path
 
 logger = logging.getLogger(__name__)
@@ -40,7 +42,7 @@ PROJECT_MARKERS = {
     "requirements.txt",
 }
 
-SECTION_ORDER = ("System Resources", "File System Entropy", "Project Health")
+SECTION_ORDER = ("System Resources", "File System Entropy", "Project Health", "Git Health")
 
 CATEGORY_TO_SECTION = {
     "system": "System Resources",
@@ -1124,6 +1126,17 @@ def _findings_to_sections(findings: list[ConsolidatedFinding]) -> list[tuple[str
     return sections
 
 
+def _git_health_check(git_health) -> CheckResult:
+    lines = [
+        f"Branch: {git_health.branch}",
+        f"Modified Files: {git_health.modified}",
+        f"Untracked: {git_health.untracked}",
+        f"Staged: {git_health.staged}",
+        f"Status: {git_health.assessment.label}",
+    ]
+    return CheckResult(status=CheckStatus.OK, lines=lines)
+
+
 def build_workstation_report(
     paths: list[Path] | None = None,
     *,
@@ -1150,6 +1163,12 @@ def build_workstation_report(
     )
     issues = [f.summary for f in findings if f.severity != CheckStatus.OK]
     sections = _findings_to_sections(findings)
+
+    try:
+        git_health = GitIntelligenceService(cwd=cwd or Path.cwd()).get_git_health()
+        sections.append(("Git Health", _git_health_check(git_health)))
+    except GitNotRepositoryError:
+        pass
 
     return WorkstationHealthReport(
         score=score,

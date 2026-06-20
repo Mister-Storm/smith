@@ -10,7 +10,9 @@ from smith.core.formatting import format_result_footer
 from smith.llm.base import LLMProvider
 from smith.memory.service import MemoryService
 from smith.models.project_context import ProjectContext
+from smith.services.git_intelligence import GitIntelligenceService
 from smith.services.project_context import ProjectContextService, format_context_text
+from smith.services.slash_commands import dispatch_slash_command
 from smith.services.tool_runner import (
     run_analyze,
     run_duplicates,
@@ -26,28 +28,6 @@ logger = logging.getLogger(__name__)
 SYSTEM_PROMPT = """You are Smith, a benevolent personal AI operator.
 You help with software development, file organization, document analysis, and productivity.
 Be concise and practical."""
-
-
-def _format_tool_response(
-    result: ToolResult,
-    tool_name: str,
-    *,
-    provider: str | None = None,
-    model: str | None = None,
-) -> str:
-    parts = [result.message]
-    if result.output_path:
-        parts.append(f"Report written to {result.output_path}")
-    if result.success:
-        parts.append(
-            format_result_footer(
-                tool_name,
-                max(result.execution_time_ms, 0),
-                provider=provider,
-                model=model,
-            )
-        )
-    return "\n".join(parts)
 
 
 def _parse_flag(args: list[str], flag: str) -> tuple[list[str], bool]:
@@ -158,35 +138,13 @@ class ChatService:
         if not tokens:
             return "Empty command."
 
-        command = tokens[0].lower()
-        args = tokens[1:]
-
-        if command == "/context":
-            return self._cmd_show_context()
-        if command == "/refresh-context":
-            return self._cmd_refresh_context()
-        if command == "/duplicates":
-            return _format_tool_response(self._cmd_duplicates(args), "duplicates")
-        if command == "/organize":
-            return _format_tool_response(self._cmd_organize(args), "organize")
-        if command == "/analyze":
-            return _format_tool_response(
-                self._cmd_analyze(args),
-                "analyze",
-                provider=self._provider if not self._analyze_structure_only(args) else None,
-                model=self._model if not self._analyze_structure_only(args) else None,
-            )
-        if command == "/summarize":
-            return _format_tool_response(
-                self._cmd_summarize(args),
-                "summarize",
-                provider=self._provider,
-                model=self._model,
-            )
-        if command == "/health":
-            return _format_tool_response(self._cmd_health(args), "health")
-
-        return f"Unknown command: {command}. Type /exit to quit."
+        return dispatch_slash_command(
+            self,
+            tokens[0].lower(),
+            tokens[1:],
+            provider=self._provider,
+            model=self._model,
+        )
 
     def _cmd_show_context(self) -> str:
         if not self._project_context:
@@ -274,3 +232,6 @@ class ChatService:
         if not args:
             return run_workstation_health()
         return run_workstation_health(paths=[args[0]])
+
+    def _git_service(self) -> GitIntelligenceService:
+        return GitIntelligenceService(cwd=self._workspace)

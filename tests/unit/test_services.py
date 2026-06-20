@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from smith.services.chat import ChatService
+from tests.helpers.git_repo import git_run
 
 
 def test_chat_slash_duplicates(tmp_path, fake_llm, memory_service, config_with_openai):
@@ -92,6 +93,52 @@ def test_chat_normal_message(fake_llm, memory_service, config_with_openai):
     assert "fake response" in result
     assert "Provider:" in result
     assert len(fake_llm.calls) == 1
+
+
+def test_chat_slash_git_summary(git_repo, fake_llm, memory_service, config_with_openai):
+    (git_repo / "changes.py").write_text("x = 1\n")
+    git_run(git_repo, "checkout", "-b", "feat/git-test")
+    service = ChatService(fake_llm, memory_service, config_with_openai, workspace=git_repo)
+    result = service._handle_slash_command("/git-summary")
+    assert "feat/git-test" in result
+    assert "Assessment" in result
+    assert "Execution time:" in result
+
+
+def test_chat_slash_git_health(git_repo, fake_llm, memory_service, config_with_openai):
+    service = ChatService(fake_llm, memory_service, config_with_openai, workspace=git_repo)
+    result = service._handle_slash_command("/git-health")
+    assert "Repository" in result
+    assert "Recent Activity" in result
+
+
+def test_chat_slash_git_changes(git_repo, fake_llm, memory_service, config_with_openai):
+    (git_repo / "changes.py").write_text("x = 1\n")
+    service = ChatService(fake_llm, memory_service, config_with_openai, workspace=git_repo)
+    result = service._handle_slash_command("/git-changes")
+    assert "changes.py" in result
+
+
+def test_chat_slash_commit_message(git_repo, fake_llm, memory_service, config_with_openai):
+    test_dir = git_repo / "tests"
+    test_dir.mkdir(parents=True)
+    (test_dir / "test_a.py").write_text("def test_a(): pass\n")
+    service = ChatService(fake_llm, memory_service, config_with_openai, workspace=git_repo)
+    result = service._handle_slash_command("/commit-message")
+    assert "Suggested Commits" in result
+
+
+def test_chat_slash_release_notes(git_repo, fake_llm, memory_service, config_with_openai):
+    git_run(git_repo, "commit", "--allow-empty", "-m", "docs: update readme")
+    service = ChatService(fake_llm, memory_service, config_with_openai, workspace=git_repo)
+    result = service._handle_slash_command("/release-notes")
+    assert "Release Notes" in result
+
+
+def test_chat_slash_git_not_repo(tmp_path, fake_llm, memory_service, config_with_openai):
+    service = ChatService(fake_llm, memory_service, config_with_openai, workspace=tmp_path)
+    result = service._handle_slash_command("/git-summary")
+    assert "not a Git repository" in result
 
 
 def test_doctor_healthy(monkeypatch, tmp_path):

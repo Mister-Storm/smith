@@ -8,3 +8,7 @@ class ConfigurationError(SmithError):
 
 class ToolExecutionError(SmithError):
     """Raised when a tool fails to execute."""
+
+
+class GitNotRepositoryError(SmithError):
+    """Raised when the current directory is not a Git repository."""

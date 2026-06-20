@@ -16,6 +16,11 @@ _COMMANDS = [
     ("organize", "Organize files into category folders"),
     ("health", "Workstation hygiene scan (read-only recommendations)"),
     ("doctor", "Run installation diagnostics"),
+    ("git summary", "Repository status and suggested commit (read-only)"),
+    ("git changes", "Human-readable explanation of current changes"),
+    ("git commit-message", "Conventional Commit message suggestions"),
+    ("git release-notes", "Release notes from recent commits"),
+    ("git health", "Compact repository health overview"),
 ]
 
 _EXAMPLES = [
@@ -34,6 +39,11 @@ _EXAMPLES = [
     ("Organize", "smith organize ~/Downloads --dry-run"),
     ("Health", "smith health"),
     ("Health JSON", "smith health --json"),
+    ("Git Summary", "smith git summary"),
+    ("Git Changes", "smith git changes"),
+    ("Git Health", "smith git health"),
+    ("Commit Message", "smith git commit-message"),
+    ("Release Notes", "smith git release-notes"),
 ]
 
 

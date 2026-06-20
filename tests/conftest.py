@@ -3,6 +3,12 @@ import pytest
 from smith.core.config import Config
 from smith.llm.base import LLMProvider
 from smith.memory.service import MemoryService
+from tests.helpers.git_repo import init_git_repo
+
+
+@pytest.fixture
+def git_repo(tmp_path):
+    return init_git_repo(tmp_path)
 
 
 class FakeLLMProvider(LLMProvider):

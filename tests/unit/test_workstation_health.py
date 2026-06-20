@@ -368,3 +368,25 @@ def test_align_injects_fallback_recommendation():
     recs = build_recommendations_v2([large], [], breakdown)
     aligned = align_score_and_recommendations(score, breakdown, recs, [large], [])
     assert any("large" in r.title.lower() or "Review" in r.title for r in aligned)
+
+
+def test_build_workstation_report_includes_git_health(tmp_path):
+    from tests.helpers.git_repo import init_git_repo
+
+    repo = init_git_repo(tmp_path)
+    (repo / "changes.py").write_text("x = 1\n")
+    report = build_workstation_report([repo], cwd=repo, max_depth=2, max_files=500)
+    titles = [title for title, _ in report.sections]
+    assert "Git Health" in titles
+    git_section = next(check for title, check in report.sections if title == "Git Health")
+    assert any("Branch:" in line for line in git_section.lines)
+    assert any("Status:" in line for line in git_section.lines)
+
+
+def test_build_workstation_report_skips_git_when_not_repo(tmp_path):
+    root = tmp_path / "not-a-repo"
+    root.mkdir()
+    (root / "file.txt").write_text("data\n")
+    report = build_workstation_report([root], cwd=root, max_depth=2, max_files=500)
+    titles = [title for title, _ in report.sections]
+    assert "Git Health" not in titles
