@@ -119,3 +119,26 @@ Assume
 ```
 
 Smith should accumulate understanding gradually rather than generating solutions from incomplete information.
+
+---
+
+## User Understanding
+
+Smith should learn useful context about the user over time.
+
+The goal is not storing everything.
+
+The goal is maintaining a concise model of:
+
+- interests
+- goals
+- preferred technologies
+- active work
+
+User context should be:
+
+- **Editable** — manual overrides via `smith profile set-interest` and `smith profile set-goal`
+- **Explainable** — every derived field traceable via `smith profile explain`
+- **Compressible** — concise representation for future planning and token-efficient prompts
+
+See `smith profile` and [ROADMAP.md](../ROADMAP.md) Sprint 8.

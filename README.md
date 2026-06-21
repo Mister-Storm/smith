@@ -210,11 +210,40 @@ smith status [path]
 | Workspace Summary | Cached `.smith/workspace_context.json` |
 | Current Project | Cached `.smith/project_context.json` |
 | Git Status | Live git read (branch, modified, untracked, suggested commit) |
-| Recommendations | Deduped hints from health, workspace, git, and cache state |
+| User Context | Cached `~/.smith/user_context.json` (domains, completeness, freshness) |
+| Recommendations | Deduped hints from health, workspace, git, profile, and cache state |
 
-Stale or missing caches suggest `smith refresh-context .`, `smith workspace .`, or `smith health`.
+Stale or missing caches suggest `smith refresh-context .`, `smith workspace .`, `smith health`, or `smith profile refresh`.
 
 See [docs/vision.md](docs/vision.md) and [ROADMAP.md](ROADMAP.md) for product direction.
+
+---
+
+## User Context Engine
+
+Deterministic user profile — not a memory system. Aggregates cached project and workspace context into a concise, explainable model at `~/.smith/user_context.json`.
+
+```bash
+smith profile show
+smith profile refresh
+smith profile refresh --infer          # optional AI-assisted gap filling
+smith profile set-interest drones
+smith profile set-goal build-open-source-ai-assistant
+smith profile explain
+```
+
+| Command | Purpose |
+|---------|---------|
+| `smith profile show` | Interests, goals, languages, frameworks, domains, completeness, freshness |
+| `smith profile refresh` | Rebuild derived fields from cache; user overrides preserved |
+| `smith profile explain` | Source, evidence, and confidence per field |
+| `smith profile set-*` / `remove-*` | Manual interests and goals (never overwritten on refresh) |
+
+**Working domains** (AI Assistants, Drones, Backend Systems, etc.) are inferred via lightweight keyword mapping — no embeddings.
+
+**Optional AI inference** (`--infer`): fills missing framework/build/database only when deterministic detection gaps exist and confidence is low. Deterministic results always win.
+
+Integrated into `smith status` as the User Context section.
 
 ---
 
@@ -330,6 +359,7 @@ Product direction: [docs/vision.md](docs/vision.md) · Sprint plan: [ROADMAP.md]
 - Git Intelligence (read-only repository awareness)
 - Workspace Intelligence (multi-project discovery and cached context)
 - Unified Status Dashboard (`smith status`)
+- User Context Engine (`smith profile`)
 - Summarize PDF
 - Duplicate Detection
 - Organize Downloads

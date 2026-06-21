@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **User Context Engine** (Sprint 8 + 8.1):
+  - CLI: `smith profile show`, `refresh`, `explain`, `set-interest`, `remove-interest`, `set-goal`, `remove-goal`
+  - Global profile at `~/.smith/user_context.json` with derived + user override merge
+  - Working domains, profile completeness, confidence reasoning, freshness helpers
+  - Optional AI-assisted context inference (`profile refresh --infer`) when deterministic gaps exist
+  - `PlanningContext` model with `unknowns` for Sprint 9
+  - User Context section in `smith status`
+  - Vision User Understanding section; ROADMAP renumbered (Sprints 9–13)
+
+### Added (prior)
+
 - **Product governance:**
   - [docs/vision.md](docs/vision.md) — mission and seven core principles (AI Last, Context Is a Product, Token Economy, Ask Before Assuming, Human Control, Explainability, Incremental Understanding)
   - [ROADMAP.md](ROADMAP.md) — completed milestones and planned Sprints 8–12 including mandatory Sprint 8.5 Planning Guardrails

@@ -26,6 +26,9 @@ _COMMANDS = [
     ("refresh-workspace-context", "Cache workspace context to .smith/"),
     ("workspace-context", "Display cached workspace context"),
     ("status", "Unified workstation overview from cached context"),
+    ("profile show", "Display user profile from ~/.smith/user_context.json"),
+    ("profile refresh", "Rebuild derived profile from cached context"),
+    ("profile explain", "Show how profile fields were derived"),
 ]
 
 _EXAMPLES = [
@@ -54,6 +57,9 @@ _EXAMPLES = [
     ("Refresh Workspace", "smith refresh-workspace-context ~/development"),
     ("Workspace Context", "smith workspace-context"),
     ("Status", "smith status"),
+    ("Profile", "smith profile show"),
+    ("Profile Refresh", "smith profile refresh"),
+    ("Set Interest", "smith profile set-interest drones"),
 ]
 
 
