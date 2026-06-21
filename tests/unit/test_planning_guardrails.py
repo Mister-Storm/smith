@@ -72,7 +72,9 @@ def planning_env(tmp_path, monkeypatch):
 
 
 def test_can_generate_plan_requires_thresholds():
-    ok, _ = can_generate_plan(0.7, known_count=5, critical_gap_count=0, important_gap_count=1, assumption_count=1)
+    ok, _ = can_generate_plan(
+        0.7, known_count=5, critical_gap_count=0, important_gap_count=1, assumption_count=1
+    )
     assert ok
     allowed, reason = can_generate_plan(
         0.7, known_count=5, critical_gap_count=1, important_gap_count=0, assumption_count=1
@@ -80,7 +82,11 @@ def test_can_generate_plan_requires_thresholds():
     assert not allowed
     assert "critical" in reason.lower()
     allowed, reason = can_generate_plan(
-        0.7, known_count=5, critical_gap_count=0, important_gap_count=1, assumption_count=MAX_ASSUMPTIONS + 1
+        0.7,
+        known_count=5,
+        critical_gap_count=0,
+        important_gap_count=1,
+        assumption_count=MAX_ASSUMPTIONS + 1,
     )
     assert not allowed
     assert "assumption" in reason.lower()

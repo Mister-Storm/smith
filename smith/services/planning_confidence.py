@@ -83,11 +83,5 @@ def calculate_confidence(
     critical_penalty = min(0.30, critical_gap_count * 0.10)
     important_penalty = min(0.20, important_gap_count * 0.05)
     assumption_penalty = min(0.25, assumption_count * 0.08)
-    raw = (
-        context_quality
-        + known_bonus
-        - critical_penalty
-        - important_penalty
-        - assumption_penalty
-    )
+    raw = context_quality + known_bonus - critical_penalty - important_penalty - assumption_penalty
     return round(max(0.0, min(1.0, raw)), 3)

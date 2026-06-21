@@ -523,9 +523,7 @@ def prioritize_gaps_with_llm(
     if llm is None:
         return gaps
 
-    dim_lines = [
-        f"- {g.dimension.value}: {g.name}" for g in dimension_gaps if g.dimension
-    ]
+    dim_lines = [f"- {g.dimension.value}: {g.name}" for g in dimension_gaps if g.dimension]
     prompt = f"Goal: {goal}\nDimensions:\n" + "\n".join(dim_lines)
     try:
         raw = llm.generate(prompt, system=_RANK_SYSTEM)

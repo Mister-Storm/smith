@@ -171,9 +171,7 @@ def plan_status(
 def plan_refresh(
     ctx: typer.Context,
     workspace: Path | None = typer.Option(None, "--workspace", help="Workspace root"),
-    goal: str | None = typer.Option(
-        None, "--goal", help="Optional goal for gap analysis"
-    ),
+    goal: str | None = typer.Option(None, "--goal", help="Optional goal for gap analysis"),
 ) -> None:
     """Rebuild planning context without generating a plan.
 

@@ -59,19 +59,11 @@ def structural_gaps(gaps: list[ContextGap]) -> list[ContextGap]:
 
 
 def critical_dimension_gaps(gaps: list[ContextGap]) -> list[ContextGap]:
-    return [
-        g
-        for g in gaps
-        if g.dimension is not None and g.severity == GapSeverity.CRITICAL
-    ]
+    return [g for g in gaps if g.dimension is not None and g.severity == GapSeverity.CRITICAL]
 
 
 def important_dimension_gaps(gaps: list[ContextGap]) -> list[ContextGap]:
-    return [
-        g
-        for g in gaps
-        if g.dimension is not None and g.severity == GapSeverity.IMPORTANT
-    ]
+    return [g for g in gaps if g.dimension is not None and g.severity == GapSeverity.IMPORTANT]
 
 
 def gaps_by_severity(gaps: list[ContextGap], severity: GapSeverity) -> list[ContextGap]:
@@ -142,11 +134,13 @@ def detect_context_gaps(
         )
 
     if not goal_lower:
-        gaps.append(_dimension_gap(
-            PlanningDimension.OBJECTIVE,
-            GapSeverity.CRITICAL,
-            "No goal statement provided.",
-        ))
+        gaps.append(
+            _dimension_gap(
+                PlanningDimension.OBJECTIVE,
+                GapSeverity.CRITICAL,
+                "No goal statement provided.",
+            )
+        )
     else:
         gaps.extend(_evaluate_dimensions(goal_lower, ctx, knowns, constraints))
 
@@ -291,9 +285,12 @@ def validate_gap_order(
 ) -> bool:
     orig_dims = [g.dimension for g in original if g.dimension is not None]
     new_dims = [g.dimension for g in reordered if g.dimension is not None]
-    return orig_dims == new_dims or sorted(orig_dims, key=lambda d: d.value) == sorted(
-        new_dims, key=lambda d: d.value
-    ) and len(orig_dims) == len(new_dims) and set(orig_dims) == set(new_dims)
+    return (
+        orig_dims == new_dims
+        or sorted(orig_dims, key=lambda d: d.value) == sorted(new_dims, key=lambda d: d.value)
+        and len(orig_dims) == len(new_dims)
+        and set(orig_dims) == set(new_dims)
+    )
 
 
 def parse_dimension_slug(value: str) -> PlanningDimension | None:
