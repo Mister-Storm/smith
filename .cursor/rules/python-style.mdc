@@ -8,7 +8,7 @@ alwaysApply: false
 
 - Target **Python 3.12+**: `list[str]`, `X | Y`, `StrEnum`, `@dataclass(slots=True)`.
 - Full type hints on public functions; use `from __future__ import annotations` in new modules.
-- **Ruff**: line length 100; run `ruff check . && ruff format .`.
+- **Ruff**: line length 100; **always** run `ruff check . && ruff format .` before finishing (see `lint-gate` rule).
 - Services hold business logic; CLI commands stay thin (Typer + Rich).
 - LLM calls only via `LLMProvider` from `smith/llm/` — not raw SDK calls in services.
 - Secrets in environment variables only; config in `smith/core/config.py`.

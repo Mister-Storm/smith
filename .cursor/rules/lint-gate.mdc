@@ -1,0 +1,37 @@
+---
+description: Require ruff lint and format checks before finishing any implementation
+alwaysApply: true
+---
+
+# Lint Gate (required before finishing)
+
+Before marking any implementation complete, **always run and pass**:
+
+```bash
+ruff check . && ruff format .
+```
+
+If either command fails, fix the issues and re-run until both succeed. Do not end the task with lint or format errors.
+
+## When to run
+
+- After editing any Python file under `smith/` or `tests/`
+- After adding or moving imports
+- As the **last step** before reporting work done to the user
+
+## Common fixes
+
+- **I001** (import order): merge duplicate imports from the same module; run `ruff check --fix .`
+- **F401** (unused import): remove the import or use it
+- **Format**: run `ruff format .` on changed files
+
+## CI parity
+
+GitHub Actions runs the same checks:
+
+```bash
+ruff check .
+ruff format --check .
+```
+
+Local `ruff format .` (without `--check`) applies fixes; use it before committing.
