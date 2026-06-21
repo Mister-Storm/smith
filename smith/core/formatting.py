@@ -8,6 +8,9 @@ _TOOL_LABELS = {
     "organize": "Organization",
     "health": "Workstation health scan",
     "status": "Status dashboard",
+    "profile show": "User profile",
+    "profile refresh": "Profile refresh",
+    "profile explain": "Profile explanation",
 }
 
 _NEXT_ACTIONS = {
@@ -17,7 +20,8 @@ _NEXT_ACTIONS = {
     "organize": "smith doctor",
     "summarize": "smith chat",
     "health": "smith duplicates ~/Downloads",
-    "status": "smith health",
+    "status": "smith profile refresh",
+    "profile refresh": "smith profile explain",
 }
 
 

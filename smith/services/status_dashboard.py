@@ -23,6 +23,7 @@ from smith.services.project_context import (
     display_framework,
     display_language,
 )
+from smith.services.user_context import UserContextService
 from smith.services.workspace_intelligence import WorkspaceIntelligenceService
 from smith.services.workstation_health import load_workstation_health_cache
 
@@ -33,6 +34,7 @@ STALE_CACHE_DAYS = 7
 PROJECT_REFRESH = "smith refresh-context ."
 WORKSPACE_REFRESH = "smith workspace ."
 HEALTH_REFRESH = "smith health"
+PROFILE_REFRESH = "smith profile refresh"
 
 
 def _display_path(path: Path) -> str:
@@ -129,6 +131,7 @@ class StatusDashboardService:
         project_context = ProjectContextService().load(self._cwd)
         workspace_summary = WorkspaceIntelligenceService(self._cwd).load_workspace_context()
         workstation_health = load_workstation_health_cache(self._cwd)
+        user_context = UserContextService(self._cwd).load()
 
         git_health = None
         commit_suggestion = None
@@ -144,7 +147,7 @@ class StatusDashboardService:
                 pass
 
         cache_freshness = self._build_cache_freshness(
-            project_context, workspace_summary, workstation_health
+            project_context, workspace_summary, workstation_health, user_context
         )
         recommendations = self._build_recommendations(
             doctor=doctor,
@@ -154,6 +157,7 @@ class StatusDashboardService:
             cache_freshness=cache_freshness,
             repo_status=repo_status,
             commit_suggestion=commit_suggestion,
+            user_context=user_context,
         )
         warnings: list[str] = []
         if workspace_summary and workspace_summary.warnings:
@@ -168,6 +172,7 @@ class StatusDashboardService:
             project_context=project_context,
             workspace_summary=workspace_summary,
             git_health=git_health,
+            user_context=user_context,
             commit_suggestion=commit_suggestion,
             recommendations=recommendations,
             warnings=warnings,
@@ -178,10 +183,16 @@ class StatusDashboardService:
         project_context,
         workspace_summary,
         workstation_health,
+        user_context,
     ) -> list[CacheFreshness]:
         project_at = project_context.generated_at.isoformat() if project_context else None
         workspace_at = workspace_summary.generated_at if workspace_summary else None
         health_at = workstation_health.generated_at if workstation_health else None
+        profile_at = (
+            user_context.generated_at.isoformat()
+            if user_context and user_context.generated_at
+            else None
+        )
 
         return [
             CacheFreshness(
@@ -202,6 +213,12 @@ class StatusDashboardService:
                 generated_at=health_at,
                 refresh_command=HEALTH_REFRESH,
             ),
+            CacheFreshness(
+                label="User Profile",
+                status=format_cache_age(profile_at),
+                generated_at=profile_at,
+                refresh_command=PROFILE_REFRESH,
+            ),
         ]
 
     def _build_recommendations(
@@ -214,6 +231,7 @@ class StatusDashboardService:
         cache_freshness,
         repo_status,
         commit_suggestion,
+        user_context,
     ) -> list[StatusRecommendation]:
         recs: list[StatusRecommendation] = []
 
@@ -256,6 +274,18 @@ class StatusDashboardService:
                         command=freshness.refresh_command,
                     )
                 )
+
+        if user_context and user_context.is_stale():
+            recs.append(
+                StatusRecommendation(
+                    text=(
+                        f"User profile is stale ({user_context.freshness_status()}) — "
+                        f"run `{PROFILE_REFRESH}`"
+                    ),
+                    source="cache",
+                    command=PROFILE_REFRESH,
+                )
+            )
 
         if repo_status and repo_status.assessment in (
             DevelopmentAssessment.WORK_IN_PROGRESS,
@@ -331,6 +361,19 @@ def format_status_dashboard(report: StatusReport) -> str:
             lines.append(f"  Suggested: {report.commit_suggestion}")
     else:
         lines.append("  Not a git repository")
+
+    lines.extend(["", "User Context"])
+    if report.user_context:
+        uc = report.user_context
+        if uc.working_domains:
+            lines.append(f"  Domains: {', '.join(uc.working_domains[:5])}")
+        lines.append(f"  Completeness: {uc.profile_completeness}%")
+        age = uc.age_days()
+        if age is not None:
+            lines.append(f"  Freshness: {age} days ({uc.freshness_status()})")
+        lines.append(f"  Confidence: {uc.confidence:.0%}")
+    else:
+        lines.append("  Not loaded — run `smith profile refresh`")
 
     if report.recommendations:
         lines.extend(["", "Recommendations"])
@@ -459,6 +502,35 @@ def render_status_dashboard(report: StatusReport, console) -> None:
                 "Not a git repository",
                 title="Git Status",
                 border_style="dim",
+                expand=False,
+            )
+        )
+    console.print()
+
+    if report.user_context:
+        uc = report.user_context
+        uc_lines = []
+        if uc.working_domains:
+            uc_lines.append(f"Domains: {', '.join(uc.working_domains[:5])}")
+        uc_lines.append(f"Completeness: {uc.profile_completeness}%")
+        age = uc.age_days()
+        if age is not None:
+            uc_lines.append(f"Freshness: {age} days ({uc.freshness_status()})")
+        uc_lines.append(f"Confidence: {uc.confidence:.0%}")
+        console.print(
+            Panel(
+                "\n".join(escape(ln) for ln in uc_lines),
+                title="User Context",
+                border_style="cyan",
+                expand=False,
+            )
+        )
+    else:
+        console.print(
+            Panel(
+                "Not loaded — run [bold]smith profile refresh[/bold]",
+                title="User Context",
+                border_style="yellow",
                 expand=False,
             )
         )

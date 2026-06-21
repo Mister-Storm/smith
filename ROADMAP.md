@@ -13,12 +13,14 @@ Living roadmap for contributors. See [docs/vision.md](docs/vision.md) for produc
 - **Workspace Health** — workstation hygiene scan (`smith health`)
 - **Git Intelligence** — read-only repository awareness (`smith git *`)
 - **Unified Status Dashboard** — cache-first workstation overview (`smith status`)
+- **Sprint 8 — User Context Engine** — deterministic user profile (`smith profile`, `~/.smith/user_context.json`)
+- **Sprint 8.1 — User Context Hardening** — working domains, completeness, freshness, confidence reasoning, optional AI inference fallback, enhanced explain
 
 ---
 
 ## Planned
 
-### Sprint 8 — Interactive Planning Engine
+### Sprint 9 — Planning Engine
 
 **Goal:** Generate implementation plans using existing context.
 
@@ -28,13 +30,15 @@ Living roadmap for contributors. See [docs/vision.md](docs/vision.md) for produc
 smith plan "add oauth login"
 ```
 
-Planning **must** follow Sprint 8.5 guardrails — not optional.
+Planning **must** follow Sprint 9.5 guardrails — not optional.
+
+Uses [`PlanningContext`](smith/models/planning_context.py) from Sprint 8.
 
 ---
 
-### Sprint 8.5 — Planning Guardrails
+### Sprint 9.5 — Planning Guardrails Runtime
 
-**Goal:** Prevent hallucinated plans and low-confidence recommendations.
+**Goal:** Prevent hallucinated plans and low-confidence recommendations at runtime.
 
 This sprint is **mandatory** before advanced planning behavior.
 
@@ -75,18 +79,11 @@ The planning engine must explicitly track:
 - assumptions
 - open questions
 
-Unknowns should be visible to users.
+Unknowns should be visible to users via `PlanningContext.unknowns`.
 
 #### Assumption Disclosure
 
 When assumptions are unavoidable, they must be clearly labeled.
-
-**Example:**
-
-```text
-Assumption:
-The project uses Spring Security.
-```
 
 #### Explainable Planning
 
@@ -98,7 +95,7 @@ Every generated recommendation should be tied to:
 
 ---
 
-### Sprint 9 — Context Compression
+### Sprint 10 — Context Compression
 
 **Goal:** Reduce context size and token consumption.
 
@@ -112,7 +109,7 @@ smith context compact
 
 ---
 
-### Sprint 10 — Explicit Memory Layer
+### Sprint 11 — Explicit Memory Layer
 
 **Goal:** User-controlled memory.
 
@@ -126,7 +123,7 @@ smith memory remove
 
 ---
 
-### Sprint 11 — Cost & Token Analytics
+### Sprint 12 — Cost & Token Analytics
 
 **Goal:** Provide visibility into:
 
@@ -137,7 +134,7 @@ smith memory remove
 
 ---
 
-### Sprint 12 — Multi-Provider Optimization
+### Sprint 13 — Multi-Provider Optimization
 
 **Goal:** Route requests intelligently between:
 

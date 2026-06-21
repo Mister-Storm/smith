@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 from smith.models.git_intelligence import GitHealthReport
 from smith.models.project_context import ProjectContext
+from smith.models.user_context import UserContext
 from smith.models.workspace import WorkspaceSummary
 from smith.models.workstation_health import WorkstationHealthCache
 from smith.services.doctor import CheckResult
@@ -44,6 +45,7 @@ class StatusReport:
     project_context: ProjectContext | None = None
     workspace_summary: WorkspaceSummary | None = None
     git_health: GitHealthReport | None = None
+    user_context: UserContext | None = None
     commit_suggestion: str | None = None
     recommendations: list[StatusRecommendation] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
