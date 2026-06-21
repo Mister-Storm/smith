@@ -35,14 +35,18 @@ from smith.services.git_intelligence import (
     format_git_changes,
     format_git_summary,
 )
-from smith.services.intent_detection import extract_file_reference, extract_location_scope, extract_references
+from smith.services.intent_detection import (
+    extract_file_reference,
+    extract_location_scope,
+    extract_references,
+)
+from smith.services.investigation_trace import log_orchestrator_bundle
 from smith.services.planner import PlanningService, format_planning_explain
 from smith.services.project_context import ProjectContextService, format_context_text
 from smith.services.repository_resolution import (
     is_likely_repository_name_ref,
     resolve_references,
 )
-from smith.services.investigation_trace import log_orchestrator_bundle
 from smith.services.tool_runner import run_analyze, run_refresh_context
 from smith.services.workspace_intelligence import WorkspaceIntelligenceService
 
@@ -460,4 +464,3 @@ class ContextOrchestrator:
             None,
             [],
         )
-

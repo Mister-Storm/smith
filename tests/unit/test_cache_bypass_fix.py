@@ -273,10 +273,16 @@ def test_portuguese_frontend_after_buildtwin_session(tmp_path, monkeypatch):
     (frontend / "README.md").write_text("# buildtwin-frontend\n", encoding="utf-8")
     src = frontend / "src" / "app"
     src.mkdir(parents=True)
-    (src / "page.tsx").write_text("export default function Page() { return null }\n", encoding="utf-8")
-    (src / "layout.tsx").write_text("export default function Layout({ children }) { return children }\n", encoding="utf-8")
+    (src / "page.tsx").write_text(
+        "export default function Page() { return null }\n", encoding="utf-8"
+    )
+    (src / "layout.tsx").write_text(
+        "export default function Layout({ children }) { return children }\n", encoding="utf-8"
+    )
 
-    llm = FakeLLMProvider(response="Project Overview\nNext.js frontend\nRecommendations\n- Add tests\n")
+    llm = FakeLLMProvider(
+        response="Project Overview\nNext.js frontend\nRecommendations\n- Add tests\n"
+    )
     memory = MemoryService(tmp_path / "test.db")
     config = Config.load(load_env=False)
     service = ChatService(llm, memory, config, workspace=cwd)
@@ -307,7 +313,9 @@ def test_buildtwin_one_directory_above(tmp_path, monkeypatch):
     cwd.mkdir()
     create_buildtwin_fixture(tmp_path, with_cache=True)
 
-    llm = FakeLLMProvider(response="Project Overview\nKotlin backend\nRecommendations\n- Add tests\n")
+    llm = FakeLLMProvider(
+        response="Project Overview\nKotlin backend\nRecommendations\n- Add tests\n"
+    )
     memory = MemoryService(tmp_path / "test.db")
     config = Config.load(load_env=False)
     service = ChatService(llm, memory, config, workspace=cwd)

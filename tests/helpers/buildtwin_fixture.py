@@ -25,7 +25,7 @@ def create_buildtwin_fixture(root: Path, *, with_cache: bool = False) -> Path:
     app = repo / "app" / "src" / "main" / "kotlin" / "com" / "buildtwin"
     app.mkdir(parents=True)
     (app / "Application.kt").write_text(
-        '@SpringBootApplication\nclass Application\n',
+        "@SpringBootApplication\nclass Application\n",
         encoding="utf-8",
     )
     (app / "BuildService.kt").write_text(
@@ -49,7 +49,9 @@ def create_buildtwin_fixture(root: Path, *, with_cache: bool = False) -> Path:
     )
     workflows = repo / ".github" / "workflows"
     workflows.mkdir(parents=True)
-    (workflows / "ci.yml").write_text("name: CI\njobs:\n  test:\n    runs-on: ubuntu-latest\n", encoding="utf-8")
+    (workflows / "ci.yml").write_text(
+        "name: CI\njobs:\n  test:\n    runs-on: ubuntu-latest\n", encoding="utf-8"
+    )
 
     if with_cache:
         smith_dir = repo / ".smith"
