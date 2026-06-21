@@ -9,10 +9,12 @@ from typing import Any
 
 from smith.core.exceptions import GitNotRepositoryError
 from smith.models.workstation_health import (
+    WORKSTATION_HEALTH_CACHE_FILE,
     ConsolidatedFinding,
     CorrelationInsight,
     RawFinding,
     Recommendation,
+    WorkstationHealthCache,
     WorkstationHealthReport,
 )
 from smith.services.doctor import CheckResult, CheckStatus
@@ -1288,3 +1290,31 @@ def render_workstation_health(report: WorkstationHealthReport, console) -> None:
 
     if report.scanned_paths:
         console.print(f"[dim]Scanned: {', '.join(report.scanned_paths)}[/dim]")
+
+
+CONTEXT_DIR = ".smith"
+
+
+def workstation_health_cache_path(cwd: Path) -> Path:
+    return cwd.expanduser().resolve() / CONTEXT_DIR / WORKSTATION_HEALTH_CACHE_FILE
+
+
+def save_workstation_health_cache(cwd: Path, report: WorkstationHealthReport) -> Path:
+    from smith.services.gitignore import ensure_smith_gitignore_entry
+
+    cache = WorkstationHealthCache.from_report(report)
+    path = workstation_health_cache_path(cwd)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(cache.to_json(), encoding="utf-8")
+    ensure_smith_gitignore_entry(cwd)
+    return path
+
+
+def load_workstation_health_cache(cwd: Path) -> WorkstationHealthCache | None:
+    path = workstation_health_cache_path(cwd)
+    if not path.is_file():
+        return None
+    try:
+        return WorkstationHealthCache.from_json(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, KeyError, TypeError):
+        return None

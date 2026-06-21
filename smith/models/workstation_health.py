@@ -1,8 +1,80 @@
 import json
 from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 from typing import Any
 
 from smith.services.doctor import CheckResult, CheckStatus
+
+WORKSTATION_HEALTH_SCHEMA_VERSION = 1
+WORKSTATION_HEALTH_CACHE_FILE = "workstation_health.json"
+
+
+@dataclass(slots=True)
+class CachedHealthRecommendation:
+    title: str
+    suggested_command: str | None = None
+
+
+@dataclass(slots=True)
+class WorkstationHealthCache:
+    schema_version: int = WORKSTATION_HEALTH_SCHEMA_VERSION
+    generated_at: str = ""
+    score: int = 0
+    issues: list[str] = field(default_factory=list)
+    recommendations: list[CachedHealthRecommendation] = field(default_factory=list)
+    scanned_paths: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "generated_at": self.generated_at,
+            "score": self.score,
+            "issues": self.issues,
+            "recommendations": [asdict(r) for r in self.recommendations],
+            "scanned_paths": self.scanned_paths,
+        }
+
+    def to_json(self, *, indent: int = 2) -> str:
+        return json.dumps(self.to_dict(), indent=indent)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "WorkstationHealthCache":
+        recs = [
+            CachedHealthRecommendation(
+                title=r.get("title", ""),
+                suggested_command=r.get("suggested_command"),
+            )
+            for r in data.get("recommendations", [])
+        ]
+        return cls(
+            schema_version=int(data.get("schema_version", WORKSTATION_HEALTH_SCHEMA_VERSION)),
+            generated_at=data.get("generated_at", ""),
+            score=int(data.get("score", 0)),
+            issues=list(data.get("issues", [])),
+            recommendations=recs,
+            scanned_paths=list(data.get("scanned_paths", [])),
+        )
+
+    @classmethod
+    def from_json(cls, text: str) -> "WorkstationHealthCache":
+        return cls.from_dict(json.loads(text))
+
+    @classmethod
+    def from_report(cls, report: "WorkstationHealthReport") -> "WorkstationHealthCache":
+        return cls(
+            schema_version=WORKSTATION_HEALTH_SCHEMA_VERSION,
+            generated_at=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            score=report.score,
+            issues=report.issues[:5],
+            recommendations=[
+                CachedHealthRecommendation(
+                    title=r.title,
+                    suggested_command=r.suggested_command,
+                )
+                for r in report.recommendations[:5]
+            ],
+            scanned_paths=report.scanned_paths,
+        )
 
 
 @dataclass(slots=True)

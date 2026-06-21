@@ -161,6 +161,8 @@ smith context . --debug          # show detection trace (troubleshooting)
 
 **Storage:** `.smith/project_context.json` in the project directory (human-readable JSON, no database, no embeddings).
 
+**Git hygiene:** All files under `.smith/` are local-only artifacts. Smith appends `.smith/*` and `!.smith/.gitkeep` to your repository `.gitignore` when one exists (never creates `.gitignore`). Do not commit generated Smith context to version control.
+
 **What it detects:** language, framework, build system, databases, infrastructure, CI/CD, and modules — all via deterministic file inspection (no LLM tokens).
 
 **Chat integration:** When you run `smith chat` inside a project, Smith loads `.smith/project_context.json` and injects a compact context block into the system prompt (max 500 characters). Use `/context` to view loaded context and `/refresh-context` to rebuild it.
@@ -188,6 +190,32 @@ Correlated findings (e.g. low disk + large caches) are grouped into actionable i
 
 When run inside a Git repository, `smith health` also includes an informational **Git Health** section (branch, modified/untracked counts, development assessment). This does not affect the health score.
 
+After each scan, Smith caches a condensed summary to `.smith/workstation_health.json` for use by `smith status`.
+
+---
+
+## Status Dashboard
+
+A single cache-first workstation overview — no rescans, no AI calls.
+
+```bash
+smith status [path]
+```
+
+| Section | Source |
+|---------|--------|
+| Environment | Provider, model, memory DB, config path |
+| Cache Freshness | Ages for project, workspace, and health caches |
+| Workstation Health | Cached `smith health` summary |
+| Workspace Summary | Cached `.smith/workspace_context.json` |
+| Current Project | Cached `.smith/project_context.json` |
+| Git Status | Live git read (branch, modified, untracked, suggested commit) |
+| Recommendations | Deduped hints from health, workspace, git, and cache state |
+
+Stale or missing caches suggest `smith refresh-context .`, `smith workspace .`, or `smith health`.
+
+See [docs/vision.md](docs/vision.md) and [ROADMAP.md](ROADMAP.md) for product direction.
+
 ---
 
 ## Git Intelligence
@@ -208,7 +236,7 @@ smith git health               # compact repository health overview
 | `smith git changes` | List changed files and heuristic summary |
 | `smith git commit-message` | Conventional Commit suggestions (`feat`, `fix`, `refactor`, etc.) |
 | `smith git release-notes` | Grouped release notes (Features, Bug Fixes, Documentation, Testing, Maintenance) |
-| `smith git health` | Repository overview — foundation for future `smith status` dashboard (Sprint 6) |
+| `smith git health` | Repository overview |
 
 **Development assessment** (informational only):
 
@@ -292,6 +320,8 @@ db_path = "~/.smith/memory.db"
 
 ## Roadmap
 
+Product direction: [docs/vision.md](docs/vision.md) · Sprint plan: [ROADMAP.md](ROADMAP.md)
+
 ### Completed
 
 - Chat with slash commands and SQLite memory
@@ -299,6 +329,7 @@ db_path = "~/.smith/memory.db"
 - Project Context (`smith context`)
 - Git Intelligence (read-only repository awareness)
 - Workspace Intelligence (multi-project discovery and cached context)
+- Unified Status Dashboard (`smith status`)
 - Summarize PDF
 - Duplicate Detection
 - Organize Downloads
@@ -312,12 +343,9 @@ db_path = "~/.smith/memory.db"
 
 ### Future
 
-- Workspace automation
-- Additional LLM providers
-- Coding agent and refactoring assistant (via `ProjectContext`)
-- Architecture review reports
+See [ROADMAP.md](ROADMAP.md) for planned sprints (Planning Engine, Context Compression, Memory Layer, Token Analytics, Multi-Provider Optimization).
 
-See [docs/future-roadmap.md](docs/future-roadmap.md) for details.
+See [docs/future-roadmap.md](docs/future-roadmap.md) for archived ideas.
 
 ---
 

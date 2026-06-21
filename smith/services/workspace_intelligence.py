@@ -26,9 +26,7 @@ from smith.tools.fs_utils import WORKSPACE_SKIP_DIR_NAMES
 
 logger = logging.getLogger(__name__)
 
-# TODO(Sprint 7): Unified Status Dashboard — `smith status` will aggregate
-# Workspace Summary, Project Context, Git Health, Workstation Health,
-# Active Provider, and Memory Status.
+# Aggregated by StatusDashboardService (smith status).
 
 MAX_PROJECTS = 100
 
