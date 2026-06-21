@@ -107,7 +107,15 @@ def build_requirements(capability: Capability, message: str) -> AnalysisRequirem
     levels = list(required_levels_for_intent(intent, depth))
     if intent == AssistantIntent.ANALYZE_PROJECT:
         text = message.lower()
-        if any(trigger in text for trigger in ("improve", "suggest", "recommend", "melhoria", "melhorias", "proponha")):
+        improve_triggers = (
+            "improve",
+            "suggest",
+            "recommend",
+            "melhoria",
+            "melhorias",
+            "proponha",
+        )
+        if any(trigger in text for trigger in improve_triggers):
             if EvidenceLevel.SOURCE_CODE not in levels:
                 levels.append(EvidenceLevel.SOURCE_CODE)
     return AnalysisRequirements(intent=intent, required_levels=levels, depth=depth)

@@ -140,7 +140,13 @@ def is_knowledge_follow_up(message: str, session: AssistantSession | None) -> bo
 def extract_file_reference(message: str, cwd: Path) -> Path | None:
     for ref in extract_references(message):
         candidate = Path(ref)
-        if candidate.suffix and not ref.startswith("/") and ".." not in ref and not ref.startswith("~"):
+        is_relative_file = (
+            candidate.suffix
+            and not ref.startswith("/")
+            and ".." not in ref
+            and not ref.startswith("~")
+        )
+        if is_relative_file:
             path = (cwd / candidate).resolve()
             if path.is_file():
                 return path

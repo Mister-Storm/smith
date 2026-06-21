@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from smith.models.assistant import AssistantSession, ResolveStatus
 from smith.services.intent_detection import (
     extract_location_scope,
@@ -39,7 +37,9 @@ def test_resolve_sibling_settings_gradle_kts_only(tmp_path):
     sibling = tmp_path / "BuildTwin"
     cwd.mkdir()
     sibling.mkdir()
-    (sibling / "settings.gradle.kts").write_text('rootProject.name = "BuildTwin"\n', encoding="utf-8")
+    (sibling / "settings.gradle.kts").write_text(
+        'rootProject.name = "BuildTwin"\n', encoding="utf-8"
+    )
     assert is_project_directory(sibling)
     result = resolve_repository_reference("BuildTwin", cwd=cwd)
     assert result.status == ResolveStatus.RESOLVED

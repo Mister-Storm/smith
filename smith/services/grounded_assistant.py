@@ -10,6 +10,7 @@ from smith.cli.thinking_renderer import ThinkingRenderer
 from smith.core.exceptions import INVESTIGATION_FAILURE_MESSAGE, InvestigationFailure
 from smith.core.formatting import format_result_footer
 from smith.models.assistant import RepositoryKnowledge, ResolveStatus
+from smith.services.analysis_requirements import is_investigative_capability
 from smith.services.assistant_session import get_assistant_session, get_fresh_knowledge
 from smith.services.capability_registry import GENERAL_CHAT_ID, get_capability, match_capability
 from smith.services.context_orchestrator import ContextOrchestrator
@@ -18,7 +19,6 @@ from smith.services.grounded_response import (
     format_grounded_response,
     generate_grounded_response,
 )
-from smith.services.analysis_requirements import is_investigative_capability
 from smith.services.intent_detection import (
     extract_location_scope,
     extract_references,
@@ -78,9 +78,8 @@ def handle_message(
     missing: list[str] = []
     not_found_messages: list[str] = []
     if refs:
-        workspace_projects = list(
-            dict.fromkeys([*nearby_projects, *WorkspaceIntelligenceService(workspace_cwd).discover_projects()])
-        )
+        discovered = WorkspaceIntelligenceService(workspace_cwd).discover_projects()
+        workspace_projects = list(dict.fromkeys([*nearby_projects, *discovered]))
         resolved = resolve_references(
             refs,
             cwd=workspace_cwd,
@@ -147,7 +146,11 @@ def handle_message(
         )
         missing.extend(result.missing)
 
-        if result.resolved_paths and not result.bundle.items and is_investigative_capability(capability.id):
+        if (
+            result.resolved_paths
+            and not result.bundle.items
+            and is_investigative_capability(capability.id)
+        ):
             raise InvestigationFailure(
                 f"{INVESTIGATION_FAILURE_MESSAGE} "
                 f"(resolved={list(result.resolved_paths.values())}, items=0)"

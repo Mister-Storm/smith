@@ -98,7 +98,7 @@ def test_investigation_failure_on_empty_bundle_with_resolved_paths(tmp_path, mon
     monkeypatch.setenv("SMITH_HOME", str(tmp_path / ".smith"))
     cwd = tmp_path / "smith"
     cwd.mkdir()
-    repo = create_buildtwin_fixture(tmp_path, with_cache=False)
+    create_buildtwin_fixture(tmp_path, with_cache=False)
 
     llm = FakeLLMProvider(response="Should not be called")
     memory = MemoryService(tmp_path / "test.db")
@@ -161,7 +161,9 @@ def test_buildtwin_pipeline_populates_evidence(caplog, tmp_path, monkeypatch):
     if not smith_cwd.is_dir():
         smith_cwd = BUILDTWIN.parent
 
-    llm = FakeLLMProvider(response="Project Overview\nKotlin backend\nRecommendations\n- Add tests\n")
+    llm = FakeLLMProvider(
+        response="Project Overview\nKotlin backend\nRecommendations\n- Add tests\n"
+    )
     memory = MemoryService(tmp_path / "test-trace.db")
     config = Config.load(load_env=False)
     service = ChatService(llm, memory, config, workspace=smith_cwd)
