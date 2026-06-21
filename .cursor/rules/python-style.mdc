@@ -1,0 +1,26 @@
+---
+description: Python style and conventions for Smith
+globs: "**/*.py"
+alwaysApply: false
+---
+
+# Python Style
+
+- Target **Python 3.12+**: `list[str]`, `X | Y`, `StrEnum`, `@dataclass(slots=True)`.
+- Full type hints on public functions; use `from __future__ import annotations` in new modules.
+- **Ruff**: line length 100; run `ruff check . && ruff format .`.
+- Services hold business logic; CLI commands stay thin (Typer + Rich).
+- LLM calls only via `LLMProvider` from `smith/llm/` — not raw SDK calls in services.
+- Secrets in environment variables only; config in `smith/core/config.py`.
+- Prefer explicit dataclasses in `smith/models/` over untyped dicts.
+- Tests in `tests/unit/` with helpers in `tests/helpers/`; maintain ≥80% coverage.
+
+```python
+# Prefer
+@dataclass(slots=True)
+class EvidenceItem:
+    source: str
+    summary: str
+
+# Avoid bare dicts for domain objects
+```
