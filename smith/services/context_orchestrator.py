@@ -35,10 +35,12 @@ from smith.services.git_intelligence import (
     format_git_changes,
     format_git_summary,
 )
+from smith.services.capability_registry import DETECT_PROJECT_CONTEXT_ID
 from smith.services.intent_detection import (
     extract_file_reference,
     extract_location_scope,
     extract_references,
+    extract_target_path,
 )
 from smith.services.investigation_trace import log_orchestrator_bundle
 from smith.services.planner import PlanningService, format_planning_explain
@@ -100,7 +102,9 @@ class ContextOrchestrator:
         missing: list[str] = []
         knowledge_by_path: dict[str, object] = {}
 
-        primary = self._primary_path(paths, session)
+        primary = self._primary_path(
+            paths, session, message=message, capability_id=capability.id
+        )
         refs = extract_references(message)
         extracted_name_refs = [ref for ref in refs if is_likely_repository_name_ref(ref)]
         effective_name_refs = name_refs if name_refs is not None else extracted_name_refs
@@ -201,6 +205,7 @@ class ContextOrchestrator:
         for evidence_type in capability.required_evidence:
             collected, tool, gap = self._collect_evidence(
                 evidence_type,
+                capability_id=capability.id,
                 message=message,
                 primary=primary,
                 paths=paths,
@@ -239,21 +244,29 @@ class ContextOrchestrator:
         self,
         paths: dict[str, Path],
         session: AssistantSession,
+        *,
+        message: str = "",
+        capability_id: str = "",
     ) -> Path | None:
         if paths:
             return next(iter(paths.values()))
+        if capability_id == DETECT_PROJECT_CONTEXT_ID:
+            target = extract_target_path(message, self._cwd)
+            if target is not None:
+                return target
         if session.analysis_target:
             return session.analysis_target
         if session.active_project:
             return session.active_project
         if self._project_service.load(self._cwd):
             return self._cwd
-        return None
+        return self._cwd if capability_id == DETECT_PROJECT_CONTEXT_ID else None
 
     def _collect_evidence(
         self,
         evidence_type: str,
         *,
+        capability_id: str,
         message: str,
         primary: Path | None,
         paths: dict[str, Path],
@@ -266,7 +279,8 @@ class ContextOrchestrator:
         if evidence_type == EVIDENCE_FILE_CONTENTS:
             return self._collect_file_contents(message, primary)
         if evidence_type == EVIDENCE_PROJECT_CONTEXT:
-            return self._collect_project_context(primary, paths)
+            force_refresh = capability_id == DETECT_PROJECT_CONTEXT_ID
+            return self._collect_project_context(primary, paths, force_refresh=force_refresh)
         if evidence_type == EVIDENCE_PLANNING_CONTEXT:
             return self._collect_planning_context(message)
         if evidence_type == EVIDENCE_GIT_SUMMARY:
@@ -359,12 +373,14 @@ class ContextOrchestrator:
         self,
         primary: Path | None,
         paths: dict[str, Path],
+        *,
+        force_refresh: bool = False,
     ) -> tuple[list[EvidenceItem], str | None, list[str]]:
         targets = list(paths.values()) if paths else ([primary] if primary else [self._cwd])
         items: list[EvidenceItem] = []
         gaps: list[str] = []
         for target in targets[:2]:
-            ctx = self._project_service.load(target)
+            ctx = None if force_refresh else self._project_service.load(target)
             if ctx is None:
                 refresh = run_refresh_context(target)
                 if refresh.success and refresh.metadata:

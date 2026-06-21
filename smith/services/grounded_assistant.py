@@ -12,7 +12,12 @@ from smith.core.formatting import format_result_footer
 from smith.models.assistant import RepositoryKnowledge, ResolveStatus
 from smith.services.analysis_requirements import is_investigative_capability
 from smith.services.assistant_session import get_assistant_session, get_fresh_knowledge
-from smith.services.capability_registry import GENERAL_CHAT_ID, get_capability, match_capability
+from smith.services.capability_registry import (
+    DETECT_PROJECT_CONTEXT_ID,
+    GENERAL_CHAT_ID,
+    get_capability,
+    match_capability,
+)
 from smith.services.context_orchestrator import ContextOrchestrator
 from smith.services.grounded_response import (
     answer_from_knowledge,
@@ -22,6 +27,7 @@ from smith.services.grounded_response import (
 from smith.services.intent_detection import (
     extract_location_scope,
     extract_references,
+    extract_target_path,
     has_location_hint,
     is_knowledge_follow_up,
 )
@@ -114,6 +120,14 @@ def handle_message(
         resolved_paths[project.name] = project
         log_repository_resolved(project)
         ui.complete("", f"{project.name} found (nearby)")
+
+    if capability.id == DETECT_PROJECT_CONTEXT_ID and not resolved_paths:
+        target = extract_target_path(message, workspace_cwd)
+        if target is not None:
+            resolved_paths[target.name] = target
+            log_repository_resolved(target)
+            ui.complete("", f"{target.name} found")
+            not_found_messages.clear()
 
     if not_found_messages and not resolved_paths:
         body = "\n\n".join(not_found_messages)

@@ -37,6 +37,7 @@ class AssistantIntent(StrEnum):
     SUMMARIZE_REPOSITORY = "summarize_repository"
     PLAN_WORK = "plan_work"
     EXPLAIN_FILE = "explain_file"
+    DETECT_PROJECT_CONTEXT = "detect_project_context"
     GENERAL_CHAT = "general_chat"
 
 

@@ -137,6 +137,9 @@ def generate_grounded_response(
     if capability.id == "plan_work":
         return _planning_response(user_message, bundle)
 
+    if capability.id == "detect_project_context":
+        return _context_detection_response(bundle, missing)
+
     if capability.analytical and not bundle.items:
         raise InvestigationFailure(INVESTIGATION_FAILURE_MESSAGE)
 
@@ -399,6 +402,38 @@ def _planning_response(user_message: str, bundle: EvidenceBundle) -> GroundedRes
         observations=["Planning context assembled from cached sources"],
         recommendations=["Run /plan with your goal when ready to generate a plan"],
         confidence=confidence,
+        blocked=False,
+    )
+
+
+def _context_detection_response(
+    bundle: EvidenceBundle,
+    missing: list[str] | None,
+) -> GroundedResponse:
+    context_items = [item for item in bundle.items if item.source == "project_context"]
+    if not context_items:
+        reasons = list(missing or [])
+        if not reasons:
+            reasons = ["Could not detect project context for the requested folder"]
+        return GroundedResponse(
+            answer=format_blocked_response(reasons, bundle.confidence.overall),
+            evidence=bundle.items,
+            confidence=bundle.confidence.overall,
+            blocked=True,
+            missing=reasons,
+        )
+
+    sections: list[str] = []
+    for item in context_items:
+        header = f"Project context for {item.path or 'workspace'}"
+        sections.append(f"{header}\n\n{item.detail}")
+
+    return GroundedResponse(
+        answer="\n\n".join(sections),
+        evidence=context_items,
+        observations=["Context detected deterministically from filesystem inspection"],
+        recommendations=["Run `/refresh-context` to rebuild after major project changes"],
+        confidence=max(bundle.confidence.overall, 0.75),
         blocked=False,
     )
 
