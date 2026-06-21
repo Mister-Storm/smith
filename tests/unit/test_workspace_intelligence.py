@@ -152,15 +152,15 @@ def test_gitignore_appends_smith_entry(tmp_path):
     (repo / ".gitignore").write_text("*.pyc\n")
     ensure_smith_gitignore_entry(repo)
     content = (repo / ".gitignore").read_text()
-    assert ".smith/" in content
-    assert content.count(".smith/") == 1
+    assert ".smith/*" in content
+    assert "!.smith/.gitkeep" in content
 
 
 def test_gitignore_no_duplicate(tmp_path):
     repo = init_git_repo(tmp_path)
-    (repo / ".gitignore").write_text(".smith/\n")
+    (repo / ".gitignore").write_text(".smith/*\n!.smith/.gitkeep\n")
     ensure_smith_gitignore_entry(repo)
-    assert (repo / ".gitignore").read_text().count(".smith/") == 1
+    assert (repo / ".gitignore").read_text().count(".smith/*") == 1
 
 
 def test_gitignore_no_create_when_missing(tmp_path):

@@ -50,6 +50,9 @@ def health(
     else:
         report = WorkstationHealthReport.from_dict(result.metadata["report"])
         render_workstation_health(report, console)
+        from smith.services.workstation_health import save_workstation_health_cache
+
+        save_workstation_health_cache(Path.cwd(), report)
 
     if output:
         output.write_text(result.message, encoding="utf-8")

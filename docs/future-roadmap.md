@@ -1,6 +1,8 @@
 # Smith Future Roadmap
 
-This document tracks ideas under consideration. Nothing here is committed to a release.
+> **See [ROADMAP.md](../ROADMAP.md) for current direction.**
+
+This document tracks older ideas under consideration. Nothing here is committed to a release.
 
 ## Sprint 3 — Project Context (implemented)
 

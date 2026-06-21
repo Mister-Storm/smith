@@ -39,4 +39,5 @@ Thumbs.db
 
 # Smith runtime data
 *.db
-.smith/
+.smith/*
+!.smith/.gitkeep

@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Product governance:**
+  - [docs/vision.md](docs/vision.md) — mission and seven core principles (AI Last, Context Is a Product, Token Economy, Ask Before Assuming, Human Control, Explainability, Incremental Understanding)
+  - [ROADMAP.md](ROADMAP.md) — completed milestones and planned Sprints 8–12 including mandatory Sprint 8.5 Planning Guardrails
+- **Unified Status Dashboard** (`smith status`):
+  - Cache-first aggregation from project context, workspace context, workstation health cache, doctor, and git intelligence
+  - Environment, cache freshness, recommendations (deduped); no LLM calls; target under 2 seconds
+  - Workstation health cache (`.smith/workstation_health.json`) written after `smith health`
+- **`.smith` git hygiene:** `.smith/*` + `!.smith/.gitkeep` pattern in repo `.gitignore` and Smith runtime helper
+
+### Added (prior)
+
 - **Workspace Intelligence** (multi-project aggregation):
   - CLI: `smith workspace`, `workspace-health`, `refresh-workspace-context`, `workspace-context`
   - Chat: `/workspace`, `/workspace-health`, `/workspace-context`, `/refresh-workspace-context`

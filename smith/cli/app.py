@@ -12,6 +12,7 @@ from smith.cli.commands import (
     organize,
     refresh_context,
     setup,
+    status,
     summarize,
     version,
     workspace,
@@ -62,6 +63,7 @@ app.command()(workspace.workspace)
 app.command(name="workspace-health")(workspace.workspace_health)
 app.command(name="refresh-workspace-context")(workspace.refresh_workspace_context)
 app.command(name="workspace-context")(workspace.workspace_context)
+app.command()(status.status)
 
 if __name__ == "__main__":
     app()

@@ -25,6 +25,7 @@ _COMMANDS = [
     ("workspace-health", "Workspace health across projects"),
     ("refresh-workspace-context", "Cache workspace context to .smith/"),
     ("workspace-context", "Display cached workspace context"),
+    ("status", "Unified workstation overview from cached context"),
 ]
 
 _EXAMPLES = [
@@ -52,6 +53,7 @@ _EXAMPLES = [
     ("Workspace Health", "smith workspace-health ~/development"),
     ("Refresh Workspace", "smith refresh-workspace-context ~/development"),
     ("Workspace Context", "smith workspace-context"),
+    ("Status", "smith status"),
 ]
 
 

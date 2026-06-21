@@ -18,9 +18,7 @@ from smith.models.git_intelligence import (
     RepositoryStatus,
 )
 
-# TODO(Sprint 7): Unified Status Dashboard — `smith status` will aggregate
-# Workspace Summary, Project Context, Git Health (via get_git_health()),
-# Workstation Health, Provider, and Memory.
+# Aggregated by StatusDashboardService (smith status).
 
 _CONVENTIONAL_COMMIT_RE = re.compile(
     r"^(?P<type>\w+)(?:\((?P<scope>[^)]+)\))?(?P<breaking>!)?:\s*(?P<subject>.+)$"
