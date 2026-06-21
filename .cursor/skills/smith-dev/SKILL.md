@@ -16,8 +16,15 @@ smith setup && smith doctor
 
 ## Quality gate (run before PR)
 
+**Required last step for every implementation** — do not finish until both pass:
+
 ```bash
 ruff check . && ruff format .
+```
+
+Then run tests:
+
+```bash
 pytest --cov=smith --cov-fail-under=80
 ```
 

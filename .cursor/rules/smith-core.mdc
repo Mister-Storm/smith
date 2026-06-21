@@ -26,4 +26,4 @@ AutoGPT-style autonomy, LangGraph orchestration, multi-agent frameworks, or LLM-
 
 ## Change discipline
 
-Minimal diffs; match surrounding style; run `ruff check . && pytest` before finishing.
+Minimal diffs; match surrounding style. **Before finishing:** run `ruff check . && ruff format .`, then `pytest`.

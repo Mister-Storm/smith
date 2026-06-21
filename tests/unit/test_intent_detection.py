@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from smith.models.assistant import AssistantSession
 from smith.services.intent_detection import (
     extract_references,
@@ -35,9 +33,7 @@ def test_extract_target_path_portuguese(tmp_path):
 
 
 def test_is_context_detection_intent_english():
-    assert is_context_detection_intent(
-        "I need to identify the context of this folder through chat"
-    )
+    assert is_context_detection_intent("I need to identify the context of this folder through chat")
 
 
 def test_is_context_detection_intent_portuguese():
