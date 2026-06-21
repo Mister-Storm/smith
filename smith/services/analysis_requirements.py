@@ -48,6 +48,7 @@ def capability_to_intent(capability_id: str) -> AssistantIntent:
         "summarize_repository": AssistantIntent.SUMMARIZE_REPOSITORY,
         "plan_work": AssistantIntent.PLAN_WORK,
         "explain_file": AssistantIntent.EXPLAIN_FILE,
+        "detect_project_context": AssistantIntent.DETECT_PROJECT_CONTEXT,
         "general_chat": AssistantIntent.GENERAL_CHAT,
     }
     return mapping.get(capability_id, AssistantIntent.GENERAL_CHAT)

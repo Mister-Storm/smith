@@ -55,3 +55,48 @@ def test_handle_message_calls_llm_when_evidence_present(tmp_path, monkeypatch):
         assert "Project Overview" in out or "Architecture" in out or "Recommendations" in out
     finally:
         memory.close()
+
+
+def test_handle_message_detects_context_without_llm(tmp_path, monkeypatch):
+    monkeypatch.setenv("SMITH_HOME", str(tmp_path / ".smith"))
+    repo = create_buildtwin_fixture(tmp_path)
+    llm = FakeLLMProvider(response="should not be called")
+    memory = MemoryService(tmp_path / "test.db")
+    config = Config.load(load_env=False)
+    service = ChatService(llm, memory, config, workspace=repo)
+    try:
+        from smith.services.grounded_assistant import handle_message
+
+        out = handle_message(
+            "identify the context of this folder",
+            chat_service=service,
+            session_id="test",
+            renderer=ThinkingRenderer(enabled=False),
+        )
+        assert len(llm.calls) == 0
+        assert "Project:" in out or "Language:" in out
+        assert "confidence" in out.lower()
+    finally:
+        memory.close()
+
+
+def test_handle_message_detects_context_portuguese(tmp_path, monkeypatch):
+    monkeypatch.setenv("SMITH_HOME", str(tmp_path / ".smith"))
+    repo = create_buildtwin_fixture(tmp_path)
+    llm = FakeLLMProvider(response="should not be called")
+    memory = MemoryService(tmp_path / "test.db")
+    config = Config.load(load_env=False)
+    service = ChatService(llm, memory, config, workspace=repo)
+    try:
+        from smith.services.grounded_assistant import handle_message
+
+        out = handle_message(
+            "identifique o contexto desta pasta",
+            chat_service=service,
+            session_id="test",
+            renderer=ThinkingRenderer(enabled=False),
+        )
+        assert len(llm.calls) == 0
+        assert "Project:" in out or "Language:" in out
+    finally:
+        memory.close()
