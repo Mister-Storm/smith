@@ -142,3 +142,42 @@ User context should be:
 - **Compressible** — concise representation for future planning and token-efficient prompts
 
 See `smith profile` and [ROADMAP.md](../ROADMAP.md) Sprint 8.
+
+---
+
+## Guided Planning
+
+Smith should not create plans from incomplete information.
+
+Smith does not plan from templates. Smith plans from context.
+
+Planning is based on:
+
+- Known facts (evidence-backed)
+- Context gaps (universal dimensions)
+- Explicit user decisions (user-provided answers)
+
+The planner:
+
+1. Identifies what is known
+2. Identifies what is missing
+3. Explains why missing information matters
+4. Requests clarification
+5. Incorporates user answers and rebuilds context
+6. Generates plans only when sufficient evidence exists
+
+Planning dimensions are universal — they apply to software, books, courses, businesses, and personal goals alike. Never on domain templates.
+
+When uncertainty is high, Smith asks clarifying questions before generating a plan. Plans are generated only when deterministic guardrails pass.
+
+Use `smith plan`, `smith plan answer`, `smith plan-status`, and `smith plan explain`. See [ROADMAP.md](../ROADMAP.md) Sprint 9.
+
+### Core Planning Principles
+
+1. **Evidence before inference** — known facts include source and evidence where available
+2. **Ask before assuming** — clarification questions when critical or important gaps remain
+3. **Deterministic first, AI second** — context assembly and readiness scoring are reproducible
+4. **Context before planning** — cached context must exist before plan generation
+5. **Minimize token consumption** — compact prompts only; no full repository dumps
+6. **Read-only by default** — planning never modifies files or executes tasks
+7. **No autonomous execution** — Smith supports decisions; the user remains in control

@@ -31,6 +31,7 @@ def test_status_command_with_caches(tmp_path, monkeypatch):
     assert "Cache Freshness" in result.output
     assert "Git Status" in result.output
     assert "User Context" in result.output
+    assert "Planning Readiness" in result.output
     assert elapsed < 2.0
 
 

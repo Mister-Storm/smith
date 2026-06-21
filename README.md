@@ -211,7 +211,8 @@ smith status [path]
 | Current Project | Cached `.smith/project_context.json` |
 | Git Status | Live git read (branch, modified, untracked, suggested commit) |
 | User Context | Cached `~/.smith/user_context.json` (domains, completeness, freshness) |
-| Recommendations | Deduped hints from health, workspace, git, profile, and cache state |
+| Planning Readiness | Knowns, gaps, assumptions, confidence, planning philosophy |
+| Recommendations | Deduped hints from health, workspace, git, profile, planning, and cache state |
 
 Stale or missing caches suggest `smith refresh-context .`, `smith workspace .`, `smith health`, or `smith profile refresh`.
 
@@ -244,6 +245,41 @@ smith profile explain
 **Optional AI inference** (`--infer`): fills missing framework/build/database only when deterministic detection gaps exist and confidence is low. Deterministic results always win.
 
 Integrated into `smith status` as the User Context section.
+
+---
+
+## Guided Planning Engine
+
+Context-aware, iterative planning — not autonomous task execution. Smith assembles known facts, context gaps, assumptions, and constraints from cached context, asks clarifying questions when needed, and generates plans only when guardrails pass. Planning uses universal dimensions, not domain templates.
+
+```bash
+smith plan "build a drone telemetry platform"
+smith plan answer timeline="3 months"
+smith plan-refresh
+smith plan "create a local AI assistant"
+smith plan-status
+smith plan explain
+```
+
+| Command | Purpose |
+|---------|---------|
+| `smith plan "GOAL"` | Build context, detect gaps, ask questions or generate plan |
+| `smith plan answer DIM="VALUE"` | Record dimension answers for the active session |
+| `smith plan-status` | Planning readiness (knowns, gaps, confidence) — no AI |
+| `smith plan-refresh` | Rebuild planning context after answers — no AI |
+| `smith plan explain` | Provenance for knowns, gaps, constraints, decisions |
+
+Optional: `--prioritize` (LLM re-ranks existing dimension gaps only), `--force-plan` (skip iterative clarification bias).
+
+**Interactive loop:** `smith plan` → questions → `smith plan answer` → `smith plan-refresh` → plan when ready.
+
+**Principles:** evidence before inference, ask before assuming, deterministic-first, compact LLM prompts only when ready to plan. Assumption budget and confidence thresholds prevent hallucinated plans.
+
+**Future:** persistent Decision Context (see [ROADMAP.md](ROADMAP.md)) will reuse answers across sessions.
+
+**Chat:** `/plan`, `/plan answer`, `/plan-status`, `/plan-refresh`
+
+Integrated into `smith status` as Planning Readiness + Planning Philosophy panels.
 
 ---
 

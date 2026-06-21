@@ -9,14 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Context Gap Analysis** (Sprint 9.2):
+  - Universal `PlanningDimension` gap detection replaces domain-template planning
+  - `ContextGap`, `PlanningDecision`, severity-based readiness
+  - Interactive loop: `smith plan answer`, session-scoped decisions (no persistence yet)
+  - Optional `--prioritize` LLM re-ranking of existing gaps only
+  - Enhanced explain output: Detected Gaps + Explicit Decisions
+  - Decision Context deferred to future ROADMAP sprint
 - **User Context Engine** (Sprint 8 + 8.1):
   - CLI: `smith profile show`, `refresh`, `explain`, `set-interest`, `remove-interest`, `set-goal`, `remove-goal`
   - Global profile at `~/.smith/user_context.json` with derived + user override merge
   - Working domains, profile completeness, confidence reasoning, freshness helpers
   - Optional AI-assisted context inference (`profile refresh --infer`) when deterministic gaps exist
-  - `PlanningContext` model with `unknowns` for Sprint 9
+  - `PlanningContext` model with `gaps` for Sprint 9.2
   - User Context section in `smith status`
   - Vision User Understanding section; ROADMAP renumbered (Sprints 9–13)
+- **Guided Planning Engine** (Sprint 9 + 9.1):
+  - CLI: `smith plan`, `plan-status`, `plan-refresh`, `plan explain`, `plan answer`
+  - `PlanningService` with evidence-first knowns, dimension gap analysis, clarification questions
+  - Deterministic confidence (40/30/20/10 context weights), assumption budget (`MAX_ASSUMPTIONS=3`)
+  - Plans generated only when `can_generate_plan()` passes; compact LLM prompts (<1500 tokens)
+  - Chat: `/plan`, `/plan answer`, `/plan-status`, `/plan-refresh`
+  - Planning Readiness + Planning Philosophy in `smith status`
+  - Vision Guided Planning + Core Planning Principles; ROADMAP Sprint 9/9.1 completed
 
 ### Added (prior)
 

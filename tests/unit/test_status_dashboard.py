@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
+from smith.models.planning_context import PlanningReadiness
 from smith.models.status import StatusRecommendation
 from smith.services.status_dashboard import (
     StatusDashboardService,
@@ -84,6 +85,20 @@ def test_build_report_uses_load_not_build(tmp_path):
         patch(
             "smith.services.status_dashboard.load_workstation_health_cache",
             return_value=None,
+        ),
+        patch(
+            "smith.services.status_dashboard.PlanningService.assess_readiness",
+            return_value=PlanningReadiness(
+                known_count=0,
+                gap_count=0,
+                critical_gap_count=0,
+                important_gap_count=0,
+                assumption_count=0,
+                constraint_count=0,
+                context_quality=0.0,
+                confidence=0.0,
+                status="Insufficient Context",
+            ),
         ),
     ):
         report = service.build_report()

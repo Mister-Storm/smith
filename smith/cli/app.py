@@ -10,6 +10,7 @@ from smith.cli.commands import (
     health,
     model,
     organize,
+    plan,
     profile,
     refresh_context,
     setup,
@@ -66,6 +67,9 @@ app.command(name="refresh-workspace-context")(workspace.refresh_workspace_contex
 app.command(name="workspace-context")(workspace.workspace_context)
 app.command()(status.status)
 app.add_typer(profile.profile_app, name="profile")
+app.command(name="plan")(plan.plan_command)
+app.command(name="plan-status")(plan.plan_status)
+app.command(name="plan-refresh")(plan.plan_refresh)
 
 if __name__ == "__main__":
     app()

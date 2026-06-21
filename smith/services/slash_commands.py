@@ -185,6 +185,18 @@ def _handle_refresh_workspace_context(service: ChatService, args: list[str]) -> 
         return ToolResult(success=False, message=str(exc))
 
 
+def _handle_plan(service: ChatService, args: list[str]) -> ToolResult:
+    return service._cmd_plan(args)
+
+
+def _handle_plan_status(service: ChatService, args: list[str]) -> str:
+    return service._cmd_plan_status(args)
+
+
+def _handle_plan_refresh(service: ChatService, args: list[str]) -> str:
+    return service._cmd_plan_refresh(args)
+
+
 def build_slash_command_registry() -> dict[str, SlashCommandSpec]:
     return {
         "/context": SlashCommandSpec("/context", _handle_context, SlashResponseMode.TEXT),
@@ -213,6 +225,17 @@ def build_slash_command_registry() -> dict[str, SlashCommandSpec]:
         "/workspace-context": SlashCommandSpec("/workspace-context", _handle_workspace_context),
         "/refresh-workspace-context": SlashCommandSpec(
             "/refresh-workspace-context", _handle_refresh_workspace_context
+        ),
+        "/plan": SlashCommandSpec(
+            "/plan",
+            _handle_plan,
+            SlashResponseMode.TOOL_WITH_LLM,
+        ),
+        "/plan-status": SlashCommandSpec(
+            "/plan-status", _handle_plan_status, SlashResponseMode.TEXT
+        ),
+        "/plan-refresh": SlashCommandSpec(
+            "/plan-refresh", _handle_plan_refresh, SlashResponseMode.TEXT
         ),
     }
 

@@ -15,26 +15,24 @@ Living roadmap for contributors. See [docs/vision.md](docs/vision.md) for produc
 - **Unified Status Dashboard** — cache-first workstation overview (`smith status`)
 - **Sprint 8 — User Context Engine** — deterministic user profile (`smith profile`, `~/.smith/user_context.json`)
 - **Sprint 8.1 — User Context Hardening** — working domains, completeness, freshness, confidence reasoning, optional AI inference fallback, enhanced explain
+- **Sprint 9 — Guided Planning Engine** — context-aware planning (`smith plan`, clarification, status integration)
+- **Sprint 9.1 — Guided Planning Hardening** — evidence-first knowns, deterministic confidence, assumption budget, compact LLM prompts, enhanced explain
+- **Sprint 9.2 — Context Gap Analysis** — universal dimension-based gap detection replaces domain-template planning; interactive `smith plan answer` loop; severity-based readiness
 
 ---
 
 ## Planned
 
-### Sprint 9 — Planning Engine
+### Future — Decision Context
 
-**Goal:** Generate implementation plans using existing context.
+Store explicit user decisions and planning answers so future plans become
+progressively more accurate without repeatedly asking the same questions.
 
-**Example:**
+Potential scope:
 
-```bash
-smith plan "add oauth login"
-```
-
-Planning **must** follow Sprint 9.5 guardrails — not optional.
-
-Uses [`PlanningContext`](smith/models/planning_context.py) from Sprint 8.
-
----
+- Persist planning answers alongside user profile
+- Reuse prior decisions in gap analysis
+- Reduce repeated clarification across sessions
 
 ### Sprint 9.5 — Planning Guardrails Runtime
 
@@ -76,10 +74,11 @@ Plans should only be generated when:
 The planning engine must explicitly track:
 
 - known facts
+- context gaps (universal dimensions)
 - assumptions
 - open questions
 
-Unknowns should be visible to users via `PlanningContext.unknowns`.
+Gaps should be visible to users via `PlanningContext.gaps` and `smith plan explain`.
 
 #### Assumption Disclosure
 
