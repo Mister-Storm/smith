@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from smith.models.git_intelligence import GitHealthReport
+from smith.models.planning_context import PlanningReadiness
 from smith.models.project_context import ProjectContext
 from smith.models.user_context import UserContext
 from smith.models.workspace import WorkspaceSummary
@@ -46,6 +47,7 @@ class StatusReport:
     workspace_summary: WorkspaceSummary | None = None
     git_health: GitHealthReport | None = None
     user_context: UserContext | None = None
+    planning_readiness: PlanningReadiness | None = None
     commit_suggestion: str | None = None
     recommendations: list[StatusRecommendation] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)

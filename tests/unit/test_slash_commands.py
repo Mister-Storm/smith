@@ -18,6 +18,9 @@ EXPECTED_COMMANDS = {
     "/workspace-health",
     "/workspace-context",
     "/refresh-workspace-context",
+    "/plan",
+    "/plan-status",
+    "/plan-refresh",
 }
 
 

@@ -11,6 +11,10 @@ _TOOL_LABELS = {
     "profile show": "User profile",
     "profile refresh": "Profile refresh",
     "profile explain": "Profile explanation",
+    "plan": "Guided planning",
+    "plan-status": "Planning readiness",
+    "plan-refresh": "Planning context refresh",
+    "plan explain": "Planning explanation",
 }
 
 _NEXT_ACTIONS = {
@@ -22,6 +26,8 @@ _NEXT_ACTIONS = {
     "health": "smith duplicates ~/Downloads",
     "status": "smith profile refresh",
     "profile refresh": "smith profile explain",
+    "plan": "smith plan-status",
+    "plan-status": "smith plan explain",
 }
 
 

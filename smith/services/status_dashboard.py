@@ -17,6 +17,7 @@ from smith.models.status import (
 )
 from smith.services.doctor import CheckStatus, run_doctor
 from smith.services.git_intelligence import GitIntelligenceService, try_get_repository_status
+from smith.services.planner import PlanningService
 from smith.services.project_context import (
     ProjectContextService,
     display_build,
@@ -132,6 +133,7 @@ class StatusDashboardService:
         workspace_summary = WorkspaceIntelligenceService(self._cwd).load_workspace_context()
         workstation_health = load_workstation_health_cache(self._cwd)
         user_context = UserContextService(self._cwd).load()
+        planning_readiness = PlanningService(cwd=self._cwd).assess_readiness(None)
 
         git_health = None
         commit_suggestion = None
@@ -158,6 +160,7 @@ class StatusDashboardService:
             repo_status=repo_status,
             commit_suggestion=commit_suggestion,
             user_context=user_context,
+            planning_readiness=planning_readiness,
         )
         warnings: list[str] = []
         if workspace_summary and workspace_summary.warnings:
@@ -173,6 +176,7 @@ class StatusDashboardService:
             workspace_summary=workspace_summary,
             git_health=git_health,
             user_context=user_context,
+            planning_readiness=planning_readiness,
             commit_suggestion=commit_suggestion,
             recommendations=recommendations,
             warnings=warnings,
@@ -232,6 +236,7 @@ class StatusDashboardService:
         repo_status,
         commit_suggestion,
         user_context,
+        planning_readiness=None,
     ) -> list[StatusRecommendation]:
         recs: list[StatusRecommendation] = []
 
@@ -299,6 +304,15 @@ class StatusDashboardService:
                         command="smith git commit-message",
                     )
                 )
+
+        if planning_readiness and planning_readiness.status == "Insufficient Context":
+            recs.append(
+                StatusRecommendation(
+                    text="Planning context is insufficient — refresh caches or profile",
+                    source="planning",
+                    command="smith plan-refresh",
+                )
+            )
 
         return _dedupe_recommendations(recs)
 
@@ -374,6 +388,29 @@ def format_status_dashboard(report: StatusReport) -> str:
         lines.append(f"  Confidence: {uc.confidence:.0%}")
     else:
         lines.append("  Not loaded — run `smith profile refresh`")
+
+    lines.extend(["", "Planning Readiness"])
+    if report.planning_readiness:
+        pr = report.planning_readiness
+        lines.append(f"  Knowns: {pr.known_count}")
+        lines.append(f"  Gaps: {pr.gap_count}")
+        lines.append(f"  Critical gaps: {pr.critical_gap_count}")
+        lines.append(f"  Important gaps: {pr.important_gap_count}")
+        lines.append(f"  Assumptions: {pr.assumption_count}")
+        lines.append(f"  Constraints: {pr.constraint_count}")
+        lines.append(f"  Status: {pr.status}")
+        lines.append(f"  Confidence: {pr.confidence:.0%}")
+        lines.extend(
+            [
+                "",
+                "Planning Philosophy",
+                "  Evidence-based",
+                "  Deterministic-first",
+                "  Read-only",
+            ]
+        )
+    else:
+        lines.append("  Not available — run `smith plan-refresh`")
 
     if report.recommendations:
         lines.extend(["", "Recommendations"])
@@ -530,6 +567,42 @@ def render_status_dashboard(report: StatusReport, console) -> None:
             Panel(
                 "Not loaded — run [bold]smith profile refresh[/bold]",
                 title="User Context",
+                border_style="yellow",
+                expand=False,
+            )
+        )
+    console.print()
+
+    if report.planning_readiness:
+        pr = report.planning_readiness
+        pr_lines = [
+            f"Knowns: {pr.known_count}",
+            f"Gaps: {pr.gap_count}",
+            f"Critical gaps: {pr.critical_gap_count}",
+            f"Important gaps: {pr.important_gap_count}",
+            f"Assumptions: {pr.assumption_count}",
+            f"Constraints: {pr.constraint_count}",
+            f"Status: {pr.status}",
+            f"Confidence: {pr.confidence:.0%}",
+            "",
+            "Planning Philosophy",
+            "Evidence-based",
+            "Deterministic-first",
+            "Read-only",
+        ]
+        console.print(
+            Panel(
+                "\n".join(escape(ln) for ln in pr_lines),
+                title="Planning Readiness",
+                border_style="cyan",
+                expand=False,
+            )
+        )
+    else:
+        console.print(
+            Panel(
+                "Not available — run [bold]smith plan-refresh[/bold]",
+                title="Planning Readiness",
                 border_style="yellow",
                 expand=False,
             )

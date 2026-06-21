@@ -29,6 +29,11 @@ _COMMANDS = [
     ("profile show", "Display user profile from ~/.smith/user_context.json"),
     ("profile refresh", "Rebuild derived profile from cached context"),
     ("profile explain", "Show how profile fields were derived"),
+    ("plan", "Guided plan from cached context"),
+    ("plan-status", "Planning readiness without AI"),
+    ("plan-refresh", "Rebuild planning context without AI"),
+    ("plan explain", "Show planning provenance for knowns and gaps"),
+    ("plan answer", "Record dimension answers for the active planning session"),
 ]
 
 _EXAMPLES = [
@@ -60,6 +65,9 @@ _EXAMPLES = [
     ("Profile", "smith profile show"),
     ("Profile Refresh", "smith profile refresh"),
     ("Set Interest", "smith profile set-interest drones"),
+    ("Plan", 'smith plan "build a drone platform"'),
+    ("Plan Status", "smith plan-status"),
+    ("Plan Explain", "smith plan explain"),
 ]
 
 

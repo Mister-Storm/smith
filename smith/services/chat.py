@@ -233,5 +233,85 @@ class ChatService:
             return run_workstation_health()
         return run_workstation_health(paths=[args[0]])
 
+    def _cmd_plan(self, args: list[str]) -> ToolResult:
+        if not args:
+            return ToolResult(success=False, message="Usage: /plan <goal>")
+        from smith.services.planner import PlanningService, format_planning_result
+
+        if args[0] == "answer":
+            return self._cmd_plan_answer(args[1:])
+
+        goal = " ".join(args)
+        service = PlanningService(cwd=self._workspace, config=self._config, provider=self._llm)
+        result = service.create_plan(goal)
+        return ToolResult(success=True, message=format_planning_result(result))
+
+    def _cmd_plan_answer(self, args: list[str]) -> ToolResult:
+        from smith.services.clarification import generate_questions_from_gaps
+        from smith.services.context_gap_analysis import parse_dimension_slug
+        from smith.services.planner import PlanningService, get_planning_session
+
+        session = get_planning_session()
+        if session is None or not session.goal:
+            return ToolResult(
+                success=False,
+                message="No active planning session. Run /plan <goal> first.",
+            )
+        if not args:
+            return ToolResult(
+                success=False,
+                message="Usage: /plan answer <dimension>=<value>",
+            )
+
+        service = PlanningService(cwd=self._workspace, config=self._config)
+        for raw in args:
+            if "=" not in raw:
+                return ToolResult(success=False, message=f"Expected dimension=value, got: {raw}")
+            key, _, value = raw.partition("=")
+            dimension = parse_dimension_slug(key.strip())
+            if dimension is None:
+                return ToolResult(success=False, message=f"Unknown dimension: {key.strip()}")
+            service.record_decision(dimension, value.strip().strip('"').strip("'"))
+
+        ctx = service.build_context(session.goal)
+        mode, confidence, gaps = service.evaluate_readiness(ctx)
+        questions = generate_questions_from_gaps(gaps)
+        lines = [
+            f"Goal: {session.goal}",
+            f"Mode: {mode.replace('_', ' ').title()}",
+            f"Confidence: {confidence:.0%}",
+            "",
+        ]
+        if gaps:
+            lines.append("Remaining Gaps:")
+            for gap in gaps[:10]:
+                lines.append(f"- {gap.name} ({gap.severity.value})")
+            lines.append("")
+        if questions:
+            lines.append("Questions:")
+            for idx, question in enumerate(questions, start=1):
+                lines.append(f"{idx}. {question.question}")
+        return ToolResult(success=True, message="\n".join(lines))
+
+    def _cmd_plan_status(self, args: list[str]) -> str:
+        from smith.services.planner import PlanningService, format_planning_readiness
+
+        readiness = PlanningService(cwd=self._workspace, config=self._config).assess_readiness(None)
+        return format_planning_readiness(readiness)
+
+    def _cmd_plan_refresh(self, args: list[str]) -> str:
+        from smith.services.planner import PlanningService, format_planning_explain
+
+        goal = " ".join(args) if args else None
+        service = PlanningService(cwd=self._workspace, config=self._config)
+        ctx = service.build_context(goal)
+        _, confidence, gaps = service.evaluate_readiness(ctx)
+        lines = [
+            format_planning_explain(ctx, gaps=gaps),
+            "",
+            f"Confidence: {confidence:.0%}",
+        ]
+        return "\n".join(lines)
+
     def _git_service(self) -> GitIntelligenceService:
         return GitIntelligenceService(cwd=self._workspace)
