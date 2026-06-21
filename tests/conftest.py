@@ -45,11 +45,14 @@ def isolate_env(monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
     monkeypatch.delenv("SMITH_LLM_PROVIDER", raising=False)
+    from smith.services.assistant_session import reset_assistant_session
     from smith.services.planner import set_last_planning_result
 
     set_last_planning_result(None)
+    reset_assistant_session()
     yield
     set_last_planning_result(None)
+    reset_assistant_session()
 
 
 @pytest.fixture

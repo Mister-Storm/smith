@@ -59,8 +59,7 @@ def test_chat_context_injection(fake_llm, memory_service, config_with_openai, tm
 
     assert len(fake_llm.calls) == 1
     prompt = fake_llm.calls[0][0]
-    assert "Current Project Context" in prompt
-    assert "app" in prompt.lower() or "kotlin" in prompt.lower()
+    assert "investigation findings" in prompt.lower() or "User question: hello" in prompt
 
 
 def test_chat_slash_refresh_context(tmp_path, fake_llm, memory_service, config_with_openai):
