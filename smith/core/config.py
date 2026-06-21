@@ -89,6 +89,28 @@ def is_key_set(name: str) -> bool:
 
 
 @dataclass
+class UIConfig:
+    assistant_color: str = "bright_cyan"
+    user_color: str = "bright_white"
+    thinking_color: str = "yellow"
+    success_color: str = "green"
+    error_color: str = "red"
+
+
+def _load_ui_config(file_data: dict) -> UIConfig:
+    ui_table = file_data.get("ui") or {}
+    if not isinstance(ui_table, dict):
+        ui_table = {}
+    return UIConfig(
+        assistant_color=str(ui_table.get("assistant_color", "bright_cyan")),
+        user_color=str(ui_table.get("user_color", "bright_white")),
+        thinking_color=str(ui_table.get("thinking_color", "yellow")),
+        success_color=str(ui_table.get("success_color", "green")),
+        error_color=str(ui_table.get("error_color", "red")),
+    )
+
+
+@dataclass
 class Config:
     openai_api_key: str = ""
     deepseek_api_key: str = ""
@@ -98,6 +120,7 @@ class Config:
     deepseek_model: str = DEFAULT_DEEPSEEK_MODEL
     config_file_path: Path = field(default_factory=get_config_file_path)
     config_file_loaded: bool = False
+    ui: UIConfig = field(default_factory=UIConfig)
 
     @classmethod
     def load(cls, *, load_env: bool = True) -> "Config":
@@ -142,6 +165,7 @@ class Config:
             deepseek_model=normalize_deepseek_model(_get("DEEPSEEK_MODEL", DEFAULT_DEEPSEEK_MODEL)),
             config_file_path=config_path,
             config_file_loaded=config_file_loaded,
+            ui=_load_ui_config(file_data),
         )
 
     def save(self) -> None:

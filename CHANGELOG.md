@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Investigative Context Acquisition & Repository Intelligence** (Sprint 10.5 + 10.5a):
+  - Depth-aware investigation: `QUICK`, `STANDARD`, and `DEEP` strategies replace flat file caps
+  - `RepositoryKnowledge` model with technologies, architecture patterns, quality/risk signals
+  - `repository_intelligence.py` — deterministic architecture, quality, and risk detectors
+  - Investigative pipeline: `context_acquisition`, `filesystem_evidence`, `evidence_validator`
+  - Structured analytical responses: Project Overview, Architecture, Strengths, Risks, Recommendations, Evidence
+  - Follow-up reuse via `session.repository_knowledge_by_path` (300s freshness)
+  - Configurable chat theme (`[ui]` in config.toml) and enhanced `ThinkingRenderer` (phase/complete/warning/error)
+  - `review_architecture` capability and improved `analyze_project` depth mapping
+  - ROADMAP renumbered: Sprints 15–17 (Repository Intelligence Expansion, Semantic Retrieval, Cross-Repository Knowledge Graph)
+- **Architectural correction — cache bypass fix** (Sprint 10.5):
+  - `EvidenceLevel.CACHE` replaces METADATA; cached project_context never satisfies analytical requirements
+  - Mandatory filesystem investigation for analyze, review, compare, summarize, and review_code intents
+  - Orchestrator no longer falls through to optional project_context when repo is resolved
+  - Investigation failure responses report attempted steps instead of asking users for on-disk files
+- **Grounded Assistant Layer** (Sprint 10):
+  - `ContextOrchestrator` for reusable evidence collection across assistant flows
+  - Capability Registry for deterministic tool routing (no LLM tool selection)
+  - `ContextConfidence` scores exposed in `EvidenceBundle` and responses
+  - Repository resolution: absolute, relative, sibling, recent, and workspace-discovered paths
+  - Grounding guardrails — analytical chat never goes direct-to-LLM
+  - Terminal UX phases: Thinking, Resolving repository, Gathering context, Analyzing, Generating
+  - In-memory `AssistantSession` for follow-up questions without repeating context
+  - No new scanners; no RAG, embeddings, or vector databases
 - **Context Gap Analysis** (Sprint 9.2):
   - Universal `PlanningDimension` gap detection replaces domain-template planning
   - `ContextGap`, `PlanningDecision`, severity-based readiness

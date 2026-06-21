@@ -16,3 +16,10 @@ class GitNotRepositoryError(SmithError):
 
 class WorkspaceNoProjectsError(SmithError):
     """Raised when workspace discovery finds no projects."""
+
+
+INVESTIGATION_FAILURE_MESSAGE = "Repository investigation failed unexpectedly."
+
+
+class InvestigationFailure(SmithError):
+    """Raised when a resolved repository produces zero evidence items."""

@@ -18,6 +18,8 @@ Living roadmap for contributors. See [docs/vision.md](docs/vision.md) for produc
 - **Sprint 9 — Guided Planning Engine** — context-aware planning (`smith plan`, clarification, status integration)
 - **Sprint 9.1 — Guided Planning Hardening** — evidence-first knowns, deterministic confidence, assumption budget, compact LLM prompts, enhanced explain
 - **Sprint 9.2 — Context Gap Analysis** — universal dimension-based gap detection replaces domain-template planning; interactive `smith plan answer` loop; severity-based readiness
+- **Sprint 10 — Grounded Assistant Layer** — `ContextOrchestrator`, capability registry, repository resolution, grounding guardrails, terminal UX phases, in-memory session
+- **Sprint 10.5 — Investigative Context Acquisition & Repository Intelligence** — depth-aware filesystem investigation, `RepositoryKnowledge`, architecture/quality/risk detectors, themed terminal UX, structured review responses, follow-up knowledge reuse
 
 ---
 
@@ -94,7 +96,7 @@ Every generated recommendation should be tied to:
 
 ---
 
-### Sprint 10 — Context Compression
+### Sprint 11 — Context Compression
 
 **Goal:** Reduce context size and token consumption.
 
@@ -108,7 +110,7 @@ smith context compact
 
 ---
 
-### Sprint 11 — Explicit Memory Layer
+### Sprint 12 — Memory Layer
 
 **Goal:** User-controlled memory.
 
@@ -122,23 +124,40 @@ smith memory remove
 
 ---
 
-### Sprint 12 — Cost & Token Analytics
+### Sprint 13 — Token Economics
 
-**Goal:** Provide visibility into:
-
-- token usage
-- estimated costs
-- provider distribution
-- context efficiency
+**Goal:** Token budgeting, accounting, and pruning — visibility into usage, estimated costs, provider distribution, and context efficiency.
 
 ---
 
-### Sprint 13 — Multi-Provider Optimization
+### Sprint 14 — Decision Context
 
-**Goal:** Route requests intelligently between:
+**Goal:** Store explicit user decisions and planning answers so future plans become progressively more accurate without repeatedly asking the same questions.
 
-- deterministic workflows
-- DeepSeek
-- OpenAI
+Potential scope:
 
-based on complexity and cost.
+- Persist planning answers alongside user profile
+- Reuse prior decisions in gap analysis
+- Reduce repeated clarification across sessions
+
+---
+
+### Sprint 15 — Repository Intelligence Expansion
+
+**Goal:** Extend deterministic repository intelligence — richer dependency graphs, cross-module coupling analysis, and deeper architecture pattern libraries.
+
+Builds on Sprint 10.5 `RepositoryKnowledge` and investigative acquisition.
+
+---
+
+### Sprint 16 — Semantic Retrieval (RAG)
+
+**Goal:** Optional retrieval-augmented generation for large codebases.
+
+**Explicitly deferred** until repository grounding (Sprint 10) and repository intelligence (Sprint 10.5/15) are mature. RAG is not a substitute for evidence-first orchestration.
+
+---
+
+### Sprint 17 — Cross-Repository Knowledge Graph
+
+**Goal:** Connect repository knowledge across a workspace — shared dependencies, patterns, and comparative insights without autonomous agents.

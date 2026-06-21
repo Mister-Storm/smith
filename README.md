@@ -148,6 +148,56 @@ Global flags: `--verbose` / `-v` · `--dry-run`
 
 ---
 
+## Grounded Assistant (Chat)
+
+`smith chat` is a **grounded conversational assistant** — not a generic LLM wrapper. Smith investigates repositories and builds synthesized knowledge before answering analytical questions.
+
+```bash
+smith chat
+```
+
+**Flow:**
+
+```text
+Your question → capability match → evidence collection → RepositoryKnowledge → confidence check → response
+```
+
+**Example:** `"Analyze BuildTwin one directory above and propose improvements"` automatically resolves `../BuildTwin`, reads structure/config/source, builds an architecture model, and produces actionable recommendations — without asking you for files already on disk.
+
+**Follow-ups** reuse in-memory `RepositoryKnowledge` (framework, tests, risks) for up to 5 minutes — no filesystem re-read.
+
+**Terminal phases** (color-coded when supported):
+
+```text
+Resolving repository...
+✓ BuildTwin found
+Inspecting project structure...
+✓ 7 modules detected
+Building architectural model...
+✓ Architecture model generated
+```
+
+**Analytical responses** include Project Overview, Architecture, Strengths, Risks, Recommendations, and Evidence. Context confidence is shown when evidence is collected.
+
+Configure chat colors in `~/.smith/config.toml`:
+
+```toml
+[ui]
+assistant_color = "bright_cyan"
+user_color = "bright_white"
+thinking_color = "yellow"
+success_color = "green"
+error_color = "red"
+```
+
+When confidence is insufficient, Smith explains what is missing — it does not invent project structure.
+
+**Slash commands** remain explicit overrides (`/analyze`, `/plan`, etc.). See [ROADMAP.md](ROADMAP.md) Sprint 10.5.
+
+RAG and embeddings are deferred to Sprint 16+ (see ROADMAP).
+
+---
+
 ## Project Context
 
 Smith can inspect your workspace once and reuse that metadata in chat.
@@ -165,7 +215,7 @@ smith context . --debug          # show detection trace (troubleshooting)
 
 **What it detects:** language, framework, build system, databases, infrastructure, CI/CD, and modules — all via deterministic file inspection (no LLM tokens).
 
-**Chat integration:** When you run `smith chat` inside a project, Smith loads `.smith/project_context.json` and injects a compact context block into the system prompt (max 500 characters). Use `/context` to view loaded context and `/refresh-context` to rebuild it.
+**Chat integration:** When you run `smith chat`, Smith uses the grounded assistant layer: analytical questions trigger evidence collection via `ContextOrchestrator` before any LLM call. Cached `.smith/project_context.json` is used when available. Use `/context` to view loaded context and `/refresh-context` to rebuild it.
 
 ---
 
@@ -377,6 +427,13 @@ smith_llm_provider = "openai"
 openai_model = "gpt-4o-mini"
 deepseek_model = "deepseek-v4-flash"
 db_path = "~/.smith/memory.db"
+
+[ui]
+assistant_color = "bright_cyan"
+user_color = "bright_white"
+thinking_color = "yellow"
+success_color = "green"
+error_color = "red"
 ```
 
 </details>
