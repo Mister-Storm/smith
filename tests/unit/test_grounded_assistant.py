@@ -31,6 +31,8 @@ def test_handle_message_blocks_without_evidence(tmp_path, monkeypatch):
 
 def test_handle_message_calls_llm_when_evidence_present(tmp_path, monkeypatch):
     monkeypatch.setenv("SMITH_HOME", str(tmp_path / ".smith"))
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
     repo = create_buildtwin_fixture(tmp_path)
     llm = FakeLLMProvider(
         response=(
@@ -40,7 +42,7 @@ def test_handle_message_calls_llm_when_evidence_present(tmp_path, monkeypatch):
     )
     memory = MemoryService(tmp_path / "test.db")
     config = Config.load(load_env=False)
-    service = ChatService(llm, memory, config, workspace=tmp_path)
+    service = ChatService(llm, memory, config, workspace=workspace)
     try:
         from smith.services.grounded_assistant import handle_message
 

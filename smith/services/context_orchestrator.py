@@ -19,6 +19,7 @@ from smith.models.assistant import (
 from smith.services.analysis_requirements import is_investigative_capability
 from smith.services.assistant_session import update_session_from_turn
 from smith.services.capability_registry import (
+    DETECT_PROJECT_CONTEXT_ID,
     EVIDENCE_FILE_CONTENTS,
     EVIDENCE_GIT_CHANGES,
     EVIDENCE_GIT_SUMMARY,
@@ -35,7 +36,6 @@ from smith.services.git_intelligence import (
     format_git_changes,
     format_git_summary,
 )
-from smith.services.capability_registry import DETECT_PROJECT_CONTEXT_ID
 from smith.services.intent_detection import (
     extract_file_reference,
     extract_location_scope,
@@ -102,9 +102,7 @@ class ContextOrchestrator:
         missing: list[str] = []
         knowledge_by_path: dict[str, object] = {}
 
-        primary = self._primary_path(
-            paths, session, message=message, capability_id=capability.id
-        )
+        primary = self._primary_path(paths, session, message=message, capability_id=capability.id)
         refs = extract_references(message)
         extracted_name_refs = [ref for ref in refs if is_likely_repository_name_ref(ref)]
         effective_name_refs = name_refs if name_refs is not None else extracted_name_refs
