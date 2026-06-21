@@ -5,12 +5,19 @@ from pathlib import Path
 import typer
 
 from smith.cli.banner import render_slash_commands_table, render_startup_banner
+from smith.cli.console import (
+    get_console,
+    print_assistant_header,
+    print_markdown,
+    styled_prompt_label,
+)
+from smith.cli.thinking_renderer import ThinkingRenderer
 from smith.core.config import Config, get_active_model
-from smith.core.formatting import format_result_footer
 from smith.llm.base import LLMProvider
 from smith.memory.service import MemoryService
 from smith.models.project_context import ProjectContext
 from smith.services.git_intelligence import GitIntelligenceService
+from smith.services.grounded_assistant import handle_message
 from smith.services.project_context import ProjectContextService, format_context_text
 from smith.services.slash_commands import dispatch_slash_command
 from smith.services.tool_runner import (
@@ -90,7 +97,12 @@ class ChatService:
 
         while True:
             try:
-                user_input = typer.prompt("You").strip()
+                console = get_console()
+                console.print(
+                    styled_prompt_label("You:", self._config.ui.user_color),
+                    end=" ",
+                )
+                user_input = console.input("").strip()
             except (EOFError, KeyboardInterrupt):
                 typer.echo("\nGoodbye.")
                 break
@@ -106,28 +118,39 @@ class ChatService:
 
             if user_input.startswith("/"):
                 response = self._handle_slash_command(user_input)
+                typer.echo("")
+                print_assistant_header(
+                    "Smith:",
+                    color=self._config.ui.assistant_color,
+                )
+                typer.echo(response)
+                typer.echo("")
             else:
-                response = self._handle_chat(session_id, user_input)
+                renderer = ThinkingRenderer(ui=self._config.ui)
+                response = handle_message(
+                    user_input,
+                    chat_service=self,
+                    session_id=session_id,
+                    renderer=renderer,
+                )
+                typer.echo("")
+                print_assistant_header(
+                    "Smith:",
+                    color=self._config.ui.assistant_color,
+                )
+                print_markdown(response)
+                typer.echo("")
 
-            typer.echo(f"\nSmith: {response}\n")
             self._memory.add_message(session_id, "assistant", response)
 
     def _handle_chat(self, session_id: str, user_input: str) -> str:
-        history = self._memory.get_recent_messages(session_id, limit=20)
-        parts = [self._system_prompt(), ""]
-        for role, content in history[:-1]:
-            label = "User" if role == "user" else "Assistant"
-            parts.append(f"{label}: {content}")
-        parts.append(f"User: {user_input}")
-        prompt = "\n".join(parts)
-        body = self._llm.generate(prompt)
-        footer = format_result_footer(
-            "chat",
-            0,
-            provider=self._provider,
-            model=self._model,
+        """Legacy direct-LLM path; grounded flow uses handle_message."""
+        return handle_message(
+            user_input,
+            chat_service=self,
+            session_id=session_id,
+            renderer=ThinkingRenderer(),
         )
-        return f"{body}\n\n{footer}"
 
     def _handle_slash_command(self, user_input: str) -> str:
         try:

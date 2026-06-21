@@ -1,0 +1,24 @@
+---
+description: Smith chat agent pipeline — intent, capabilities, evidence, LLM
+globs: "smith/services/**,smith/models/**"
+alwaysApply: false
+---
+
+# Agent Pipeline
+
+Chat flow: `intent_detection` → `match_capability` → `ContextOrchestrator` → `generate_grounded_response`.
+
+## Rules
+
+1. **Never let the LLM choose tools** — extend `capability_registry.py` and orchestrator collectors instead.
+2. **Capabilities declare evidence** — add `EVIDENCE_*` constants and collectors in `context_orchestrator.py`.
+3. **Investigative capabilities** — register in `analysis_requirements.py`; build `RepositoryKnowledge` before LLM.
+4. **Session state** — use `assistant_session.py` (in-memory, 5 min knowledge TTL); not SQLite for hot path.
+5. **Follow-ups** — respect `intent_detection.is_follow_up` / `is_knowledge_follow_up`; reuse cached knowledge.
+6. **Blocked responses** — when confidence is insufficient, explain what's missing; do not invent structure.
+
+## Adding a capability
+
+Edit `_CAPABILITIES` in `capability_registry.py` → orchestrator evidence → tests in `tests/unit/test_capability_registry.py` and related.
+
+Keep triggers **domain-neutral** where possible (planning, summarize, compare — not framework-specific).

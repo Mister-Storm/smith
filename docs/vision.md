@@ -181,3 +181,58 @@ Use `smith plan`, `smith plan answer`, `smith plan-status`, and `smith plan expl
 5. **Minimize token consumption** — compact prompts only; no full repository dumps
 6. **Read-only by default** — planning never modifies files or executes tasks
 7. **No autonomous execution** — Smith supports decisions; the user remains in control
+
+---
+
+## Grounded Assistant
+
+Smith does not answer analytical questions from imagination.
+
+When a tool can obtain the information needed to answer, Smith must attempt evidence collection before generating a response.
+
+### Principles
+
+1. **Evidence before LLM** — never speculate when evidence can be collected
+2. **Deterministic tool selection** — capabilities and `ContextOrchestrator` decide tools; the LLM does not
+3. **Context confidence visibility** — expose confidence for repository, framework, architecture, and project understanding
+4. **Reusable context orchestration** — one orchestrator for chat and future grounded flows
+5. **No RAG, embeddings, vector databases, or autonomous agents** (deferred to later roadmap sprints)
+
+### Response structure
+
+Analytical answers include:
+
+- **Evidence** — what was collected and from where
+- **Observations** — what the evidence shows
+- **Recommendations** — actionable next steps grounded in evidence
+
+When confidence is insufficient, Smith explains what is missing and how to obtain it.
+
+Architecture centers on `ContextOrchestrator` and the capability registry — not chat-specific hacks. See [ROADMAP.md](../ROADMAP.md) Sprint 10.
+
+---
+
+## Investigative Assistant
+
+Smith does not collect files and hope the LLM understands them. Smith **investigates** repositories before answering.
+
+When a user asks to analyze or review a project, Smith:
+
+1. Resolves the repository automatically
+2. Reads structure, configuration, and representative source code from disk
+3. Builds synthesized **RepositoryKnowledge** (technologies, architecture patterns, quality signals, risks)
+4. Generates recommendations grounded in that knowledge — not raw snippets alone
+
+Cached `.smith/project_context.json` is a **hint**, not evidence. Smith never asks the user for directory trees, build files, or configuration that is already available locally.
+
+---
+
+## Repository Intelligence Principles
+
+1. **Read before recommending** — inspect the repository before suggesting changes
+2. **Investigate before asking** — gather evidence from disk before clarification questions
+3. **Build knowledge before generating conclusions** — synthesize `RepositoryKnowledge` before the LLM answers
+4. **Never ask for information already on disk** — no requests for trees, build files, or config Smith can read
+5. **Prefer repository understanding over file inspection** — structured knowledge beats raw file dumps
+
+Analytical responses include Project Overview, Architecture, Strengths, Risks, Recommendations, and Evidence. See [ROADMAP.md](../ROADMAP.md) Sprint 10.5.

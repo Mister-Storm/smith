@@ -1,0 +1,29 @@
+---
+description: Smith core product principles and architecture boundaries
+alwaysApply: true
+---
+
+# Smith Core
+
+Smith is a **generic personal AI operator** (terminal-first, local-first), not a Cursor/Claude Code clone.
+
+## Invariants
+
+- **Deterministic before LLM** — intent matching and tool selection happen without the model.
+- **Evidence before inference** — collect context on disk/cache before generating analytical answers.
+- **Human in control** — read-only by default; destructive actions need explicit confirmation.
+- **Generic capabilities** — planning and assistance should work beyond software (courses, business, personal goals).
+
+## Do not build
+
+AutoGPT-style autonomy, LangGraph orchestration, multi-agent frameworks, or LLM-driven tool routing.
+
+## Where things live
+
+- Agent pipeline: `smith/services/` (`grounded_assistant`, `capability_registry`, `context_orchestrator`, `intent_detection`)
+- CLI: `smith/cli/` (thin); logic in services
+- Product principles: `docs/vision.md`; agent overview: `AGENT.md`
+
+## Change discipline
+
+Minimal diffs; match surrounding style; run `ruff check . && pytest` before finishing.

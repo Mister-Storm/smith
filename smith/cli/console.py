@@ -49,3 +49,13 @@ def print_error(message: str) -> None:
 def print_footer(footer: str) -> None:
     get_console().print()
     get_console().print(footer, style="dim" if _color_enabled() else None)
+
+
+def styled_prompt_label(label: str, color: str) -> str:
+    if not _color_enabled():
+        return label
+    return f"[{color}]{label}[/{color}]"
+
+
+def print_assistant_header(label: str = "Smith:", *, color: str = "bright_cyan") -> None:
+    get_console().print(styled_prompt_label(label, color))

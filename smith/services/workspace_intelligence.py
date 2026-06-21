@@ -32,12 +32,23 @@ MAX_PROJECTS = 100
 
 PROJECT_FILE_MARKERS = (
     "pyproject.toml",
+    "requirements.txt",
+    "setup.py",
+    "setup.cfg",
     "build.gradle",
     "build.gradle.kts",
+    "settings.gradle",
+    "settings.gradle.kts",
+    "gradlew",
     "pom.xml",
     "package.json",
+    "composer.json",
     "Cargo.toml",
     "go.mod",
+    "CMakeLists.txt",
+    "Gemfile",
+    "Makefile",
+    "docker-compose.yml",
 )
 
 SINGLE_PROJECT_WARNING = (
