@@ -18,6 +18,7 @@ from smith.memory.service import MemoryService
 from smith.models.project_context import ProjectContext
 from smith.services.git_intelligence import GitIntelligenceService
 from smith.services.grounded_assistant import handle_message
+from smith.services.history_compression import compress_session_history
 from smith.services.project_context import ProjectContextService, format_context_text
 from smith.services.slash_commands import dispatch_slash_command
 from smith.services.tool_runner import (
@@ -142,6 +143,13 @@ class ChatService:
                 typer.echo("")
 
             self._memory.add_message(session_id, "assistant", response)
+
+            # Trigger history compression if session grows long
+            compress_session_history(
+                session_id,
+                memory=self._memory,
+                llm=self._llm,
+            )
 
     def _handle_chat(self, session_id: str, user_input: str) -> str:
         """Legacy direct-LLM path; grounded flow uses handle_message."""

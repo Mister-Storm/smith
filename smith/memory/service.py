@@ -36,6 +36,62 @@ class MemoryService:
         ).fetchall()
         return [(row["role"], row["content"]) for row in reversed(rows)]
 
+    def count_session_messages(self, session_id: str) -> int:
+        row = self._conn.execute(
+            "SELECT COUNT(*) AS cnt FROM conversations WHERE session_id = ?",
+            (session_id,),
+        ).fetchone()
+        return int(row["cnt"])
+
+    def get_all_session_messages(self, session_id: str) -> list[tuple[str, str]]:
+        rows = self._conn.execute(
+            """
+            SELECT role, content FROM conversations
+            WHERE session_id = ?
+            ORDER BY id ASC
+            """,
+            (session_id,),
+        ).fetchall()
+        return [(row["role"], row["content"]) for row in rows]
+
+    def replace_old_messages(
+        self,
+        session_id: str,
+        *,
+        keep_count: int,
+        summary_content: str,
+    ) -> None:
+        """Delete all but the most recent `keep_count` messages and insert a summary."""
+        # Find the id threshold: keep the last `keep_count` messages
+        rows = self._conn.execute(
+            """
+            SELECT id FROM conversations
+            WHERE session_id = ?
+            ORDER BY id DESC
+            LIMIT 1 OFFSET ?
+            """,
+            (session_id, keep_count - 1),
+        ).fetchall()
+
+        if rows:
+            threshold_id = rows[0]["id"]
+            self._conn.execute(
+                "DELETE FROM conversations WHERE session_id = ? AND id < ?",
+                (session_id, threshold_id),
+            )
+
+        # Insert the summary as a system message with timestamp before the kept messages
+        self._conn.execute(
+            "INSERT INTO conversations (session_id, role, content, created_at) "
+            "VALUES (?, 'system', ?, ?)",
+            (
+                session_id,
+                f"[Histórico compactado] {summary_content}",
+                datetime.now(UTC).isoformat(),
+            ),
+        )
+        self._conn.commit()
+
     def count_conversations(self) -> int:
         row = self._conn.execute("SELECT COUNT(*) AS cnt FROM conversations").fetchone()
         return int(row["cnt"])
