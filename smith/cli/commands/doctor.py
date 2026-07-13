@@ -21,6 +21,7 @@ def doctor(
         smith doctor --test-provider
         smith doctor --deep
     """
-    report = run_doctor(test_provider=test_provider, deep=deep)
+    profile = ctx.obj.get("profile", "default")
+    report = run_doctor(test_provider=test_provider, deep=deep, profile_name=profile)
     render_doctor_report(report, get_console())
     raise typer.Exit(code=report.exit_code)

@@ -9,6 +9,8 @@ from smith.core.exceptions import ConfigurationError
 
 MIN_PYTHON_VERSION = (3, 12)
 
+SMITH_PROFILE = "SMITH_PROFILE"
+
 DEEPSEEK_V4_FLASH = "deepseek-v4-flash"
 DEEPSEEK_V4_PRO = "deepseek-v4-pro"
 DEFAULT_DEEPSEEK_MODEL = DEEPSEEK_V4_FLASH
@@ -63,18 +65,28 @@ def format_deepseek_model_menu() -> str:
     return "\n".join(lines)
 
 
-def get_smith_home() -> Path:
+def get_smith_home(profile_name: str | None = None) -> Path:
     env_path = os.environ.get("SMITH_HOME")
-    if env_path:
-        return Path(env_path).expanduser()
-    return Path("~/.smith").expanduser()
+    base = Path(env_path).expanduser() if env_path else Path("~/.smith").expanduser()
+    if profile_name and profile_name != "default":
+        base = base / "profiles" / profile_name
+    return base
 
 
-def get_config_file_path() -> Path:
+def get_config_file_path(profile_name: str | None = None) -> Path:
     env_path = os.environ.get("SMITH_CONFIG_PATH")
     if env_path:
         return Path(env_path).expanduser()
-    return get_smith_home() / "config.toml"
+    return get_smith_home(profile_name) / "config.toml"
+
+
+def resolve_profile_name(override: str | None = None) -> str:
+    if override:
+        return override
+    env_val = os.environ.get(SMITH_PROFILE, "").strip()
+    if env_val:
+        return env_val
+    return "default"
 
 
 def _load_config_file(path: Path) -> dict:
@@ -123,8 +135,9 @@ class Config:
     ui: UIConfig = field(default_factory=UIConfig)
 
     @classmethod
-    def load(cls, *, load_env: bool = True) -> "Config":
-        config_path = get_config_file_path()
+    def load(cls, *, load_env: bool = True, profile_name: str | None = None) -> "Config":
+        resolved_profile = resolve_profile_name(profile_name)
+        config_path = get_config_file_path(resolved_profile)
         file_data = _load_config_file(config_path)
         config_file_loaded = config_path.is_file()
 
@@ -153,7 +166,7 @@ class Config:
             return default
 
         db_path_str = _get("SMITH_DB_PATH") or file_data.get("db_path", "")
-        default_db = Path("~/.smith/memory.db").expanduser()
+        default_db = get_smith_home(resolved_profile) / "memory.db"
         db_path = Path(db_path_str).expanduser() if db_path_str else default_db
 
         return cls(
