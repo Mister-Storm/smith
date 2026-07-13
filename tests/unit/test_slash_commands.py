@@ -21,6 +21,7 @@ EXPECTED_COMMANDS = {
     "/plan",
     "/plan-status",
     "/plan-refresh",
+    "/hermes",
 }
 
 

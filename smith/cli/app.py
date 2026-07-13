@@ -38,6 +38,12 @@ def main(
     ctx: typer.Context,
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable debug logging"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Preview destructive actions"),
+    profile: str = typer.Option(
+        "default",
+        "--profile",
+        "-p",
+        help="Configuration profile name (stored in ~/.smith/profiles/<name>/)",
+    ),
 ) -> None:
     """Smith CLI — your benevolent personal AI operator."""
     setup_logging(verbose=verbose)
@@ -45,6 +51,7 @@ def main(
     ctx.obj["verbose"] = verbose
     ctx.obj["dry_run"] = dry_run
     ctx.obj["console"] = get_console()
+    ctx.obj["profile"] = profile
 
 
 app.command()(chat.chat)

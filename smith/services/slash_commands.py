@@ -197,6 +197,20 @@ def _handle_plan_refresh(service: ChatService, args: list[str]) -> str:
     return service._cmd_plan_refresh(args)
 
 
+def _handle_hermes(service: ChatService, args: list[str]) -> ToolResult:
+    from smith.tools.hermes_integration import run_hermes_task
+
+    if not args:
+        return ToolResult(
+            success=False,
+            message="Usage: /hermes <task description>\n\n"
+            "Delegates a task to Hermes Agent.\n"
+            "Example: /hermes create a new Python project with FastAPI",
+        )
+    task = " ".join(args)
+    return run_hermes_task(task, workdir=service._workspace)
+
+
 def build_slash_command_registry() -> dict[str, SlashCommandSpec]:
     return {
         "/context": SlashCommandSpec("/context", _handle_context, SlashResponseMode.TEXT),
@@ -237,6 +251,7 @@ def build_slash_command_registry() -> dict[str, SlashCommandSpec]:
         "/plan-refresh": SlashCommandSpec(
             "/plan-refresh", _handle_plan_refresh, SlashResponseMode.TEXT
         ),
+        "/hermes": SlashCommandSpec("/hermes", _handle_hermes),
     }
 
 

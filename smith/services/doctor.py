@@ -296,9 +296,13 @@ def _check_deep_connectivity(config: Config) -> CheckResult:
 
 
 def run_doctor(
-    *, test_provider: bool = False, deep: bool = False, config: Config | None = None
+    *,
+    test_provider: bool = False,
+    deep: bool = False,
+    config: Config | None = None,
+    profile_name: str | None = None,
 ) -> DoctorReport:
-    config = config or Config.load()
+    config = config or Config.load(profile_name=profile_name)
     logger.info("Running doctor diagnostics")
 
     sections: list[tuple[str, CheckResult]] = []
