@@ -347,3 +347,77 @@ class TestOpenAIProviderToolCalling:
 
         assert "".join(tokens) == "Streaming works"
         assert len(done) == 1
+
+    def test_should_stream_tool_calls(self) -> None:
+        from smith.core.config import Config
+        from smith.llm.openai_provider import OpenAIProvider
+
+        config = Config()
+        mock_client = MagicMock()
+
+        tool_def = ToolDef(
+            name="search_docs",
+            description="Search documentation",
+            parameters={
+                "type": "object",
+                "properties": {"query": {"type": "string"}},
+            },
+        )
+
+        chunks = [
+            _mock_chunk("Thinking..."),
+            _mock_tool_call_chunk(
+                delta_index=0, tc_id="call_1", tc_name="search_docs", tc_args='{"query": "'
+            ),
+            _mock_tool_call_chunk(delta_index=0, tc_id=None, tc_name=None, tc_args='pytest"}'),
+        ]
+        final = _mock_chunk(None)
+        final.usage = MagicMock(prompt_tokens=10, completion_tokens=20, total_tokens=30)
+        mock_client.chat.completions.create.return_value = chunks + [final]
+
+        provider = OpenAIProvider(config, client=mock_client)
+        events = list(provider.generate_stream("search pytest", tools=[tool_def]))
+
+        tool_call_events = [e for e in events if e.type == "tool_call"]
+        done_events = [e for e in events if e.type == "done"]
+
+        assert len(tool_call_events) == 1
+        assert tool_call_events[0].tool_call is not None
+        assert tool_call_events[0].tool_call.name == "search_docs"
+        assert '{"query": "pytest"}' in tool_call_events[0].tool_call.arguments
+        assert len(done_events) == 1
+
+
+class TestDeepSeekStructured:
+    def test_should_return_structured_json(self) -> None:
+        from smith.core.config import Config
+        from smith.llm.deepseek_provider import DeepSeekProvider
+
+        config = Config()
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = _mock_response(
+            content='{"name": "Smith", "version": "0.1.0"}',
+        )
+
+        provider = DeepSeekProvider(config, client=mock_client)
+        result = provider.generate_structured("describe the project", response_model=dict)
+
+        assert isinstance(result, dict)
+        assert result["name"] == "Smith"
+        assert result["version"] == "0.1.0"
+
+    def test_should_fallback_to_raw_string_on_invalid_json(self) -> None:
+        from smith.core.config import Config
+        from smith.llm.deepseek_provider import DeepSeekProvider
+
+        config = Config()
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = _mock_response(
+            content="not valid json",
+        )
+
+        provider = DeepSeekProvider(config, client=mock_client)
+        result = provider.generate_structured("say hi", response_model=dict)
+
+        assert isinstance(result, str)
+        assert result == "not valid json"

@@ -9,59 +9,15 @@ from typing import Any
 from openai import OpenAI
 
 from smith.core.config import Config
-from smith.llm.base import (
-    LLMProvider,
-    LLMResponse,
-    StreamEvent,
-    TokenUsage,
-    ToolCall,
-    ToolDef,
+from smith.llm._openai_compat import (
+    log_llm_call,
+    parse_tool_calls,
+    parse_usage,
+    to_openai_tools,
 )
+from smith.llm.base import LLMProvider, LLMResponse, StreamEvent, TokenUsage, ToolCall, ToolDef
 
 logger = logging.getLogger(__name__)
-
-
-def _to_openai_tools(
-    tools: list[ToolDef] | None,
-) -> list[dict[str, Any]] | None:
-    if not tools:
-        return None
-    return [
-        {
-            "type": "function",
-            "function": {
-                "name": t.name,
-                "description": t.description,
-                "parameters": t.parameters,
-            },
-        }
-        for t in tools
-    ]
-
-
-def _parse_tool_calls(message: Any) -> tuple[ToolCall, ...]:
-    if not hasattr(message, "tool_calls") or not message.tool_calls:
-        return ()
-    calls: list[ToolCall] = []
-    for tc in message.tool_calls:
-        calls.append(
-            ToolCall(
-                id=tc.id,
-                name=tc.function.name,
-                arguments=tc.function.arguments,
-            )
-        )
-    return tuple(calls)
-
-
-def _parse_usage(response: Any) -> TokenUsage | None:
-    if not hasattr(response, "usage") or response.usage is None:
-        return None
-    return TokenUsage(
-        prompt_tokens=response.usage.prompt_tokens or 0,
-        completion_tokens=response.usage.completion_tokens or 0,
-        total_tokens=response.usage.total_tokens or 0,
-    )
 
 
 class OpenAIProvider(LLMProvider):
@@ -86,7 +42,7 @@ class OpenAIProvider(LLMProvider):
         )
         elapsed = time.perf_counter() - start
         content = response.choices[0].message.content or ""
-        _log_llm_call(self.name, self._config.openai_model, prompt, content, elapsed)
+        log_llm_call(self.name, self._config.openai_model, prompt, content, elapsed)
         return content
 
     def generate_with_tools(
@@ -101,7 +57,7 @@ class OpenAIProvider(LLMProvider):
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
 
-        openai_tools = _to_openai_tools(tools)
+        openai_tools = to_openai_tools(tools)
         kwargs: dict[str, Any] = {
             "model": self._config.openai_model,
             "messages": messages,
@@ -114,9 +70,9 @@ class OpenAIProvider(LLMProvider):
         elapsed = time.perf_counter() - start
         choice = response.choices[0]
         content = choice.message.content or ""
-        tool_calls = _parse_tool_calls(choice.message)
-        usage = _parse_usage(response)
-        _log_llm_call(
+        tool_calls = parse_tool_calls(choice.message)
+        usage = parse_usage(response)
+        log_llm_call(
             self.name,
             self._config.openai_model,
             prompt,
@@ -138,7 +94,7 @@ class OpenAIProvider(LLMProvider):
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
 
-        openai_tools = _to_openai_tools(tools)
+        openai_tools = to_openai_tools(tools)
         kwargs: dict[str, Any] = {
             "model": self._config.openai_model,
             "messages": messages,
@@ -196,8 +152,13 @@ class OpenAIProvider(LLMProvider):
 
         content = "".join(content_parts)
         elapsed = time.perf_counter() - start
-        _log_llm_call(
-            self.name, self._config.openai_model, prompt, content, elapsed, tool_calls=tool_calls
+        log_llm_call(
+            self.name,
+            self._config.openai_model,
+            prompt,
+            content,
+            elapsed,
+            tool_calls=tool_calls,
         )
 
         for tc in tool_calls:
@@ -230,34 +191,10 @@ class OpenAIProvider(LLMProvider):
         )
         elapsed = time.perf_counter() - start
         content = response.choices[0].message.content or ""
-        _log_llm_call(self.name, self._config.openai_model, prompt, content, elapsed)
+        log_llm_call(self.name, self._config.openai_model, prompt, content, elapsed)
 
         try:
             return json.loads(content)
         except json.JSONDecodeError:
             logger.warning("generate_structured: failed to parse JSON, returning raw string")
             return content
-
-
-def _log_llm_call(
-    provider: str,
-    model: str,
-    prompt: str,
-    content: str,
-    elapsed: float,
-    *,
-    tool_calls: tuple[ToolCall, ...] | None = None,
-) -> None:
-    extra = ""
-    if tool_calls:
-        names = ", ".join(tc.name for tc in tool_calls)
-        extra = f" tool_calls=[{names}]"
-    logger.info(
-        "LLM call provider=%s model=%s prompt_len=%d response_len=%d duration_ms=%.0f%s",
-        provider,
-        model,
-        len(prompt),
-        len(content),
-        elapsed * 1000,
-        extra,
-    )

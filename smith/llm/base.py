@@ -94,11 +94,10 @@ class LLMProvider(ABC):
         Override in providers that support native streaming.
         """
         result = self.generate_with_tools(prompt, system=system, tools=tools)
-        if result.tool_calls:
-            for tc in result.tool_calls:
-                yield StreamEvent(type="tool_call", tool_call=tc)
-        else:
+        if result.content:
             yield StreamEvent(type="token", content=result.content)
+        for tc in result.tool_calls:
+            yield StreamEvent(type="tool_call", tool_call=tc)
         yield StreamEvent(type="done", usage=result.usage)
         return result
 
