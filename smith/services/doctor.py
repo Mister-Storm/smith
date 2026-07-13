@@ -38,12 +38,15 @@ class CheckResult:
 class DoctorReport:
     sections: list[tuple[str, CheckResult]] = field(default_factory=list)
     connectivity: CheckResult | None = None
+    deep_check: CheckResult | None = None
 
     @property
     def exit_code(self) -> int:
         all_checks = [r for _, r in self.sections]
         if self.connectivity:
             all_checks.append(self.connectivity)
+        if self.deep_check:
+            all_checks.append(self.deep_check)
         if any(r.status == CheckStatus.CRITICAL for r in all_checks):
             return 2
         if any(r.status == CheckStatus.WARN for r in all_checks):
@@ -219,7 +222,82 @@ def _check_connectivity(config: Config) -> CheckResult:
         )
 
 
-def run_doctor(*, test_provider: bool = False, config: Config | None = None) -> DoctorReport:
+def _check_deep_connectivity(config: Config) -> CheckResult:
+    """Full connectivity test: basic, structured, and tool-calling."""
+    try:
+        provider = get_llm_provider(config)
+    except ConfigurationError as exc:
+        return CheckResult(
+            status=CheckStatus.WARN,
+            lines=["Provider: None", f"Status: SKIPPED ({exc})"],
+        )
+
+    lines: list[str] = [f"Provider: {provider.name}"]
+
+    # 1. Basic generate test
+    t0 = time.perf_counter()
+    try:
+        resp = provider.generate("Reply with: ok", system="Reply with exactly: ok")
+        t1 = time.perf_counter()
+        basic_ok = "ok" in resp.lower()
+        basic_latency = t1 - t0
+        lines.append(f"Basic: {'OK' if basic_ok else 'CONTENT_MISMATCH'} ({basic_latency:.2f}s)")
+    except Exception as exc:
+        lines.append(f"Basic: FAILED ({exc})")
+
+    # 2. Structured output test (JSON mode)
+    t0 = time.perf_counter()
+    try:
+        result = provider.generate_structured(
+            'Return JSON: {"test": true}',
+            response_model=dict,
+        )
+        t1 = time.perf_counter()
+        struct_ok = isinstance(result, dict) and result.get("test") is True
+        struct_latency = t1 - t0
+        lines.append(f"Structured: {'OK' if struct_ok else 'FAILED'} ({struct_latency:.2f}s)")
+    except Exception as exc:
+        lines.append(f"Structured: FAILED ({exc})")
+
+    # 3. Tool calling test
+    from smith.llm.base import ToolDef
+
+    t0 = time.perf_counter()
+    try:
+        tool_def = ToolDef(
+            name="ping",
+            description="Respond with pong",
+            parameters={
+                "type": "object",
+                "properties": {"message": {"type": "string"}},
+            },
+        )
+        tool_resp = provider.generate_with_tools(
+            'Call the ping tool with message "pong"',
+            tools=[tool_def],
+        )
+        t1 = time.perf_counter()
+        tool_ok = len(tool_resp.tool_calls) > 0 or "pong" in tool_resp.content.lower()
+        tool_latency = t1 - t0
+        lines.append(f"Tool Calling: {'OK' if tool_ok else 'NO_TOOL_CALL'} ({tool_latency:.2f}s)")
+        if tool_resp.usage:
+            u = tool_resp.usage
+            token_line = (
+                f"Token Usage: {u.prompt_tokens} prompt / "
+                f"{u.completion_tokens} completion / {u.total_tokens} total"
+            )
+            lines.append(token_line)
+    except Exception as exc:
+        lines.append(f"Tool Calling: FAILED ({exc})")
+
+    has_failure = any("FAILED" in line for line in lines)
+    status = CheckStatus.WARN if has_failure else CheckStatus.OK
+    return CheckResult(status=status, lines=lines)
+
+
+def run_doctor(
+    *, test_provider: bool = False, deep: bool = False, config: Config | None = None
+) -> DoctorReport:
     config = config or Config.load()
     logger.info("Running doctor diagnostics")
 
@@ -235,8 +313,9 @@ def run_doctor(*, test_provider: bool = False, config: Config | None = None) -> 
     sections.append(("Filesystem", _check_filesystem(config)))
 
     connectivity = _check_connectivity(config) if test_provider else None
+    deep_check = _check_deep_connectivity(config) if deep else None
 
-    return DoctorReport(sections=sections, connectivity=connectivity)
+    return DoctorReport(sections=sections, connectivity=connectivity, deep_check=deep_check)
 
 
 def format_doctor_report(report: DoctorReport) -> str:
@@ -250,6 +329,11 @@ def format_doctor_report(report: DoctorReport) -> str:
     if report.connectivity:
         lines.append(_section_header("Provider Connectivity"))
         lines.extend(report.connectivity.lines)
+        lines.append("")
+
+    if report.deep_check:
+        lines.append(_section_header("Deep Connectivity Test"))
+        lines.extend(report.deep_check.lines)
         lines.append("")
 
     lines.append(_section_header("Overall Status"))
@@ -295,6 +379,21 @@ def render_doctor_report(report: DoctorReport, console) -> None:
         table.add_column("Details")
         icon, style = _STATUS_STYLE[report.connectivity.status]
         for line in report.connectivity.lines:
+            if ": " in line:
+                key, value = line.split(": ", 1)
+                table.add_row(key, f"[{style}]{icon}[/{style}]", value)
+            else:
+                table.add_row(line, f"[{style}]{icon}[/{style}]", "")
+        console.print(table)
+        console.print()
+
+    if report.deep_check:
+        table = Table(title="Deep Connectivity Test", show_header=True, header_style="bold")
+        table.add_column("Check", style="dim")
+        table.add_column("Status", width=8)
+        table.add_column("Details")
+        icon, style = _STATUS_STYLE[report.deep_check.status]
+        for line in report.deep_check.lines:
             if ": " in line:
                 key, value = line.split(": ", 1)
                 table.add_row(key, f"[{style}]{icon}[/{style}]", value)
