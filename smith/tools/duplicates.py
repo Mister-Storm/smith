@@ -34,6 +34,8 @@ class FindDuplicateFilesTool(Tool):
         for path in directory.rglob("*"):
             if not path.is_file() or should_skip_path(path, directory):
                 continue
+            if path.name.startswith("."):  # pular arquivos ocultos
+                continue
             try:
                 size = path.stat().st_size
             except OSError:
