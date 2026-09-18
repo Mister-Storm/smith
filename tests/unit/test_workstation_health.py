@@ -129,8 +129,9 @@ def test_scoring_diminishing_returns():
         for i in range(5)
     ]
     score, breakdown = compute_workstation_score_v2(naming_findings, [])
-    assert breakdown.get("naming", 0) >= -3
-    assert score >= 97
+    # Penalty scales with number of findings via category_penalty diminishing returns
+    assert breakdown.get("naming", 0) >= -8
+    assert score >= 92
 
 
 def test_recommendations_deduplicated():

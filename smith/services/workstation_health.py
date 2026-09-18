@@ -865,7 +865,7 @@ def compute_workstation_score_v2(
     if naming_findings:
         penalty = int(category_penalty(3.0, len(naming_findings)))
         if penalty:
-            breakdown["naming"] = -min(penalty, 3)
+            breakdown["naming"] = -penalty
             score -= breakdown["naming"]
 
     manifest_clusters: dict[str, int] = defaultdict(int)
