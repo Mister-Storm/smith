@@ -227,9 +227,12 @@ def scan_stale(path: Path, *, stale_days: int) -> list[RawFinding]:
         return []
 
     ratio = stale_count / total_files if total_files else 0.0
-    severity = CheckStatus.WARN if stale_count > 20 or ratio > 0.4 else CheckStatus.OK
-    if severity == CheckStatus.OK and stale_count > 5:
+    if stale_count > 20 or ratio > 0.4:
         severity = CheckStatus.WARN
+    elif stale_count > 5:
+        severity = CheckStatus.WARN
+    else:
+        severity = CheckStatus.OK
     if stale_count <= 0:
         return []
 
