@@ -277,7 +277,12 @@ def scan_cache(roots: list[Path], *, max_depth: int) -> list[RawFinding]:
         if cache_bytes < 100 * 1024 * 1024:
             continue
 
-        severity = CheckStatus.WARN if cache_bytes > 1024**3 else CheckStatus.WARN
+        if cache_bytes <= 1024**3:
+            severity = CheckStatus.OK
+        elif cache_bytes <= 4 * 1024**3:
+            severity = CheckStatus.WARN
+        else:
+            severity = CheckStatus.CRITICAL
         node_modules_bytes = sum(size for name, size in cache_dirs if "node_modules" in name)
         lines = [f"Total cache: {format_bytes(cache_bytes)}"]
         for name, size in sorted(cache_dirs, key=lambda x: -x[1])[:5]:
