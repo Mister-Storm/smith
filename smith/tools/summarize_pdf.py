@@ -31,7 +31,10 @@ class SummarizePdfTool(Tool):
             total_pages = len(reader.pages)
             pages_to_read = reader.pages
             if pages_limit is not None:
-                pages_to_read = reader.pages[: int(pages_limit)]
+                try:
+                    pages_to_read = reader.pages[: int(pages_limit)]
+                except (ValueError, TypeError):
+                    pages_to_read = reader.pages
 
             pages_text = []
             for page in pages_to_read:

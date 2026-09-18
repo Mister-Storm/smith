@@ -4,9 +4,29 @@ from collections import defaultdict
 from pathlib import Path
 
 from smith.tools.base import Tool, ToolResult
-from smith.tools.fs_utils import format_bytes, should_skip_path
+from smith.tools.fs_utils import format_bytes
 
 logger = logging.getLogger(__name__)
+
+SKIP_DUPLICATE_DIRS = {
+    ".git",
+    "node_modules",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "target",
+    "dist",
+    "build",
+    ".gradle",
+}
+
+
+def _should_skip_duplicate(path: Path, directory: Path) -> bool:
+    try:
+        rel = path.relative_to(directory)
+    except ValueError:
+        return True
+    return any(part in SKIP_DUPLICATE_DIRS for part in rel.parts) or path.name.startswith(".")
 
 
 def _hash_file(path: Path, chunk_size: int = 65536) -> str:
@@ -32,7 +52,7 @@ class FindDuplicateFilesTool(Tool):
         file_count = 0
 
         for path in directory.rglob("*"):
-            if not path.is_file() or should_skip_path(path, directory):
+            if not path.is_file() or _should_skip_duplicate(path, directory):
                 continue
             try:
                 size = path.stat().st_size

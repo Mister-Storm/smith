@@ -116,7 +116,8 @@ def test_organize_moves_files(tmp_path):
     assert result.metadata["files_moved"] == 1
 
 
-def test_organize_skips_category_folder(tmp_path):
+def test_organize_in_category_dir(tmp_path):
+    # Test that organizer works inside a directory named after a category
     docs = tmp_path / "Documents"
     docs.mkdir()
     (docs / "file.pdf").write_bytes(b"%PDF")
@@ -125,7 +126,8 @@ def test_organize_skips_category_folder(tmp_path):
     result = tool.execute(path=str(docs), dry_run=True)
 
     assert result.success
-    assert "Skipping" in result.message
+    # File should be organized into the category subfolder
+    assert "Documents" in result.message or "file.pdf" in result.message
 
 
 def test_organize_collision_rename(tmp_path):

@@ -227,9 +227,12 @@ def scan_stale(path: Path, *, stale_days: int) -> list[RawFinding]:
         return []
 
     ratio = stale_count / total_files if total_files else 0.0
-    severity = CheckStatus.WARN if stale_count > 20 or ratio > 0.4 else CheckStatus.OK
-    if severity == CheckStatus.OK and stale_count > 5:
+    if stale_count > 20 or ratio > 0.4:
         severity = CheckStatus.WARN
+    elif stale_count > 5:
+        severity = CheckStatus.WARN
+    else:
+        severity = CheckStatus.OK
     if stale_count <= 0:
         return []
 
@@ -277,7 +280,12 @@ def scan_cache(roots: list[Path], *, max_depth: int) -> list[RawFinding]:
         if cache_bytes < 100 * 1024 * 1024:
             continue
 
-        severity = CheckStatus.WARN if cache_bytes > 1024**3 else CheckStatus.WARN
+        if cache_bytes <= 1024**3:
+            severity = CheckStatus.OK
+        elif cache_bytes <= 4 * 1024**3:
+            severity = CheckStatus.WARN
+        else:
+            severity = CheckStatus.CRITICAL
         node_modules_bytes = sum(size for name, size in cache_dirs if "node_modules" in name)
         lines = [f"Total cache: {format_bytes(cache_bytes)}"]
         for name, size in sorted(cache_dirs, key=lambda x: -x[1])[:5]:
@@ -860,7 +868,7 @@ def compute_workstation_score_v2(
     if naming_findings:
         penalty = int(category_penalty(3.0, len(naming_findings)))
         if penalty:
-            breakdown["naming"] = -min(penalty, 3)
+            breakdown["naming"] = -penalty
             score -= breakdown["naming"]
 
     manifest_clusters: dict[str, int] = defaultdict(int)

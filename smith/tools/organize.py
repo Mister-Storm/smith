@@ -63,12 +63,8 @@ class OrganizeDownloadsTool(Tool):
         if not directory.is_dir():
             return ToolResult(success=False, message=f"Not a directory: {directory}")
 
-        if directory.name in CATEGORY_DIR_NAMES:
-            return ToolResult(
-                success=True,
-                message=f"Skipping {directory} — already inside a category folder.",
-                metadata={"files_moved": 0, "dry_run": dry_run, "categories": {}},
-            )
+        # Removed check for category-named directories.
+        # The organizer will create subdirectories inside the target directory.
 
         files = [p for p in directory.iterdir() if p.is_file() and not p.name.startswith(".")]
 

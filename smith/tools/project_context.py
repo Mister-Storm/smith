@@ -133,6 +133,11 @@ def _detect_patterns(context: AnalysisProjectContext) -> list[str]:
 
 def _detect_tests(path: Path) -> bool:
     test_dirs = {"test", "tests", "src/test", "src/test/java", "src/test/kotlin"}
+    # Check for well-known test directories first (fast, no rglob needed)
+    for td in test_dirs:
+        if (path / td).exists():
+            return True
+    # Check for test files with standard naming conventions
     for file_path in path.rglob("*"):
         if not file_path.is_file() or should_skip_path(file_path, path):
             continue
@@ -142,9 +147,6 @@ def _detect_tests(path: Path) -> bool:
         if file_path.name.startswith("test_") and file_path.suffix == ".py":
             return True
         if "Test" in file_path.name and file_path.suffix in (".java", ".kt"):
-            return True
-    for td in test_dirs:
-        if (path / td).exists():
             return True
     return False
 
