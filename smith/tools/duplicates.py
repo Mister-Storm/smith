@@ -4,7 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from smith.tools.base import Tool, ToolResult
-from smith.tools.fs_utils import format_bytes, should_skip_path
+from smith.tools.fs_utils import format_bytes
 
 logger = logging.getLogger(__name__)
 
